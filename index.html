@@ -2,52 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Responsive viewport -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Dungeon Crawler PWA</title>
     <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
     <style>
-      /* Global Reset */
       * {
         box-sizing: border-box;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
       }
+      
       html, body {
         margin: 0;
         padding: 0;
         height: 100%;
+        width: 100%;
+        overflow: hidden;
+        position: fixed;
         background: #000;
         font-family: sans-serif;
         color: #fff;
       }
-      /* Flex container to center game wrapper */
+
       #container {
+        width: 100vw;
+        height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100%;
       }
-      /* Game wrapper with fixed aspect ratio 4:3 (800×600) */
+
       #gameWrapper {
         position: relative;
         width: 100%;
-        max-width: 800px;
-        aspect-ratio: 4 / 3;
-        background: #111;
+        height: 100%;
+        max-width: 100vw;
+        max-height: 100vh;
       }
-      /* Canvas fills the game wrapper */
+
       #gameCanvas {
         width: 100%;
         height: 100%;
-        background: #222;
-        image-rendering: pixelated;
+        object-fit: contain;
       }
-      /* HUD – positioned relative to #gameWrapper */
+
+      /* HUD Elements */
       #hud {
         position: absolute;
         top: 10px;
         left: 10px;
         z-index: 10;
       }
+      
       #healthBar {
         width: 150px;
         height: 20px;
@@ -55,15 +64,18 @@
         border: 2px solid #fff;
         margin-bottom: 5px;
       }
+      
       #healthFill {
         height: 100%;
         background: limegreen;
         width: 100%;
       }
+      
       #scoreDisplay {
         font-size: 18px;
       }
-      /* Inventory Bar – top right */
+
+      /* Inventory */
       #inventoryBar {
         position: absolute;
         top: 10px;
@@ -72,64 +84,19 @@
         display: flex;
         gap: 5px;
       }
-      #inventoryBar .invItem {
+
+      .invItem {
         width: 50px;
         height: 50px;
         border: 2px solid #fff;
+        background: rgba(0, 0, 0, 0.5);
         cursor: pointer;
       }
-      #inventoryBar .active {
+
+      .invItem.active {
         border-color: gold;
       }
-      /* Touch Controls – bottom left and bottom right */
-      #touchControls {
-        position: absolute;
-        bottom: 10px;
-        left: 0;
-        right: 0;
-        z-index: 50;
-        pointer-events: none;
-      }
-      /* Joystick – bottom left */
-      #joystickContainer {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        pointer-events: auto;
-      }
-      #joystick {
-        position: absolute;
-        left: 40px;
-        top: 40px;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 50%;
-        pointer-events: auto;
-        touch-action: none;
-      }
-      /* Action Button – bottom right */
-      #actionButtonContainer {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        pointer-events: auto;
-      }
-      #actionButton {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        font-size: 18px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid #fff;
-        color: #fff;
-        cursor: pointer;
-      }
-      /* Orientation Prompt (if needed) */
+
       #orientationPrompt {
         display: none;
         position: fixed;
@@ -138,13 +105,14 @@
         width: 100%;
         height: 100%;
         background: #000;
-        z-index: 100;
-        display: flex;
+        z-index: 1000;
         align-items: center;
         justify-content: center;
         text-align: center;
+        font-size: 24px;
+        padding: 20px;
       }
-      /* Start Screen overlay */
+
       #startScreen {
         position: fixed;
         top: 0;
@@ -158,64 +126,128 @@
         align-items: center;
         justify-content: center;
       }
+
       #startScreen h1 {
         font-size: 48px;
         margin-bottom: 20px;
       }
+
       #startScreen button {
-        padding: 10px 20px;
-        font-size: 20px;
+        padding: 15px 30px;
+        font-size: 24px;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 5px;
         cursor: pointer;
+      }
+
+      #touchControls {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 150px;
+        z-index: 100;
+      }
+
+      #joystickArea {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+      }
+
+      #joystick {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        top: 35px;
+        left: 35px;
+      }
+
+      #actionButton {
+        position: absolute;
+        bottom: 40px;
+        right: 40px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid #fff;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        #touchControls {
+          display: block;
+        }
+        
+        @media (orientation: portrait) {
+          #orientationPrompt {
+            display: flex;
+          }
+          #container {
+            display: none;
+          }
+        }
+      }
+
+      @media (min-width: 769px) {
+        #gameWrapper {
+          aspect-ratio: 16/9;
+          max-width: 1200px;
+          max-height: 80vh;
+        }
       }
     </style>
   </head>
   <body>
-    <!-- Orientation prompt (if in portrait on mobile) -->
     <div id="orientationPrompt">
-      <p>Please rotate your device to landscape mode.</p>
+      <div>
+        <img src="rotate-device.svg" alt="Rotate your device" style="width: 64px; height: 64px; margin-bottom: 20px;">
+        <p>Please rotate your device to landscape mode to play</p>
+      </div>
     </div>
-    <!-- Start Screen -->
+
     <div id="startScreen">
       <h1>Dungeon Crawler</h1>
       <button id="startButton">Start Game</button>
     </div>
-    <!-- Flex container for centering the game wrapper -->
-    <div id="container" style="display: none;">
+
+    <div id="container">
       <div id="gameWrapper">
-        <!-- HUD -->
         <div id="hud">
           <div id="healthBar">
             <div id="healthFill"></div>
           </div>
           <div id="scoreDisplay">Score: 0</div>
         </div>
-        <!-- Inventory Bar -->
         <div id="inventoryBar"></div>
-        <!-- Game Canvas -->
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <!-- Touch Controls -->
+        <canvas id="gameCanvas"></canvas>
+        
         <div id="touchControls">
-          <div id="joystickContainer">
+          <div id="joystickArea">
             <div id="joystick"></div>
           </div>
-          <div id="actionButtonContainer">
-            <button id="actionButton">Action</button>
-          </div>
+          <button id="actionButton">Attack</button>
         </div>
       </div>
     </div>
+
     <script>
-      // PWA Service Worker Registration
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log('Service Worker registered', reg))
-          .catch(err => console.error('Service Worker registration failed', err));
-      }
-
-      // (Optional) Orientation Check: You could use CSS media queries instead of JS.
-      // For example, show the orientation prompt via CSS if needed.
-
-      // --- Core Game Code (Using Virtual Resolution 800x600) ---
+      // Game Classes and Constants from your original code
       let canvas, ctx;
       let player;
       let enemies = [];
@@ -232,14 +264,10 @@
       let projectiles = [];
       let portal = null;
       let walls = [];
-      const weaponIcons = {
-        'Sword': 'images/sword.png',
-        'Spear': 'images/spear.png',
-        'Bow': 'images/bow.png',
-        'Wand': 'images/wand.png'
-      };
+      let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      let joystickPos = { x: 0, y: 0 };
 
-      // Game Classes
+      // Your original game classes
       class Player {
         constructor(x, y, size, color) {
           this.x = x;
@@ -252,13 +280,6 @@
         render(ctx) {
           ctx.fillStyle = this.color;
           ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-          const barWidth = 100, barHeight = 10;
-          const healthBarX = this.x - barWidth/2;
-          const healthBarY = this.y - this.size/2 - 20;
-          ctx.fillStyle = 'gray';
-          ctx.fillRect(healthBarX, healthBarY, barWidth, barHeight);
-          ctx.fillStyle = this.health > 50 ? 'limegreen' : 'red';
-          ctx.fillRect(healthBarX, healthBarY, barWidth * (this.health/this.maxHealth), barHeight);
         }
         intersects(other) {
           const dx = this.x - other.x;
@@ -266,167 +287,405 @@
           return Math.sqrt(dx * dx + dy * dy) < (this.size + other.size) / 2;
         }
       }
-      class Enemy {
-        constructor(x, y, size, color, health) {
-          this.x = x;
-          this.y = y;
-          this.size = size;
-          this.color = color;
-          this.health = health;
+
+      // [Include all your other class definitions: Enemy, Boss, Portal, Weapon, Projectile, Wall]
+      // [These remain unchanged from your original code]
+
+      // Mobile Controls Setup
+      if (isMobile) {
+        const joystick = document.getElementById('joystick');
+        const joystickArea = document.getElementById('joystickArea');
+        let joystickActive = false;
+
+        joystickArea.addEventListener('touchstart', handleJoystickStart);
+        joystickArea.addEventListener('touchmove', handleJoystickMove);
+        joystickArea.addEventListener('touchend', handleJoystickEnd);
+
+        function handleJoystickStart(e) {
+          e.preventDefault();
+          joystickActive = true;
+          updateJoystickPosition(e.touches[0]);
         }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-          const barWidth = 30, barHeight = 5;
-          const barX = this.x - barWidth/2;
-          const barY = this.y - this.size/2 - 10;
-          ctx.fillStyle = 'limegreen';
-          ctx.fillRect(barX, barY, barWidth * (this.health/100), barHeight);
-          ctx.strokeStyle = 'black';
-          ctx.strokeRect(barX, barY, barWidth, barHeight);
-        }
-        update(player) {
-          const dx = player.x - this.x;
-          const dy = player.y - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 300) {
-            const speed = 1;
-            this.x += (dx / distance) * speed;
-            this.y += (dy / distance) * speed;
+
+        function handleJoystickMove(e) {
+          e.preventDefault();
+          if (joystickActive) {
+            updateJoystickPosition(e.touches[0]);
           }
         }
+
+        function handleJoystickEnd(e) {
+          e.preventDefault();
+          joystickActive = false;
+          joystick.style.transform = 'translate(0px, 0px)';
+          joystickPos = { x: 0, y: 0 };
+        }
+
+        function updateJoystickPosition(touch) {
+          const rect = joystickArea.getBoundingClientRect();
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          let x = touch.clientX - rect.left - centerX;
+          let y = touch.clientY - rect.top - centerY;
+          
+          const maxDistance = rect.width / 2 - joystick.offsetWidth / 2;
+          const distance = Math.sqrt(x * x + y * y);
+          
+          if (distance > maxDistance) {
+            const angle = Math.atan2(y, x);
+            x = Math.cos(angle) * maxDistance;
+            y = Math.sin(angle) * maxDistance;
+          }
+          
+          joystick.style.transform = `translate(${x}px, ${y}px)`;
+          joystickPos = {
+            x: x / maxDistance,
+            y: y / maxDistance
+          };
+
+          // Update player movement based on joystick
+          if (player) {
+            const speed = 5;
+            const newX = player.x + joystickPos.x * speed;
+            const newY = player.y + joystickPos.y * speed;
+            
+            // Apply movement within bounds
+            player.x = Math.max(Math.min(newX, dungeonWidth - player.size), player.size);
+            player.y = Math.max(Math.min(newY, dungeonHeight - player.size), player.size);
+          }
+        }
+
+        // Mobile Action Button
+        document.getElementById('actionButton').addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          if (currentWeapon) {
+            if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
+              shootProjectile(player.x + 50, player.y); // Shoot right by default on mobile
+            } else {
+              meleeAttack(player.x + 50, player.y);
+            }
+          }
+        });
       }
-      class Boss {
-        constructor(x, y, size, color, health) {
-          this.x = x;
-          this.y = y;
-          this.size = size;
-          this.color = color;
-          this.health = health;
-          this.maxHealth = health;
+
+      // Modified handlePlayerMovement for both mobile and desktop
+      function handlePlayerMovement() {
+        if (!player) return;
+        
+        const speed = 200 / 60;
+        let newX = player.x;
+        let newY = player.y;
+
+        if (isMobile) {
+          // Mobile movement using joystick position
+          newX += joystickPos.x * speed;
+          newY += joystickPos.y * speed;
+        } else {
+          // Desktop keyboard controls
+          if (keys['a'] || keys['ArrowLeft']) newX -= speed;
+          if (keys['d'] || keys['ArrowRight']) newX += speed;
+          if (keys['w'] || keys['ArrowUp']) newY -= speed;
+          if (keys['s'] || keys['ArrowDown']) newY += speed;
         }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-          const barWidth = this.size, barHeight = 5;
-          const barX = this.x - barWidth/2;
-          const barY = this.y - this.size/2 - 10;
-          ctx.fillStyle = 'limegreen';
-          ctx.fillRect(barX, barY, barWidth * (this.health/this.maxHealth), barHeight);
-          ctx.strokeStyle = 'black';
-          ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+        // Boundary and collision checks
+        newX = Math.max(Math.min(newX, dungeonWidth - player.size), player.size);
+        newY = Math.max(Math.min(newY, dungeonHeight - player.size), player.size);
+
+        let collision = false;
+        for (let wall of walls) {
+          if (wall.intersects(newX, newY, player.size)) {
+            collision = true;
+            break;
+          }
         }
-        update(player) {
-          const dx = player.x - this.x;
-          const dy = player.y - this.y;
-          const angle = Math.atan2(dy, dx);
-          this.x += Math.cos(angle) * 1;
-          this.y += Math.sin(angle) * 1;
+
+        if (!collision) {
+          player.x = newX;
+          player.y = newY;
         }
+
+        // Update camera position
+        cameraX = Math.max(Math.min(player.x - canvas.width/2, dungeonWidth - canvas.width), 0);
+        cameraY = Math.max(Math.min(player.y - canvas.height/2, dungeonHeight - canvas.height), 0);
       }
-      class Portal {
-        constructor(x, y, size, color) {
-          this.x = x;
-          this.y = y;
-          this.size = size;
-          this.color = color;
-        }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-        }
+
+      // Canvas Resize Handler
+      function resizeCanvas() {
+        const wrapper = document.getElementById('gameWrapper');
+        canvas.width = wrapper.offsetWidth;
+        canvas.height = wrapper.offsetHeight;
       }
-      class Weapon {
-        constructor(x, y, size, color, type) {
-          this.x = x;
-          this.y = y;
-          this.size = size;
-          this.color = color;
-          this.type = type;
-          this.stats = getWeaponStats(type);
-        }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-        }
-        intersects(player) {
-          const dx = this.x - player.x;
-          const dy = this.y - player.y;
-          return Math.sqrt(dx * dx + dy * dy) < (this.size + player.size) / 2;
-        }
-      }
-      class Projectile {
-        constructor(x, y, size, color, dx, dy, speed) {
-          this.x = x;
-          this.y = y;
-          this.size = size;
-          this.color = color;
-          this.dx = dx;
-          this.dy = dy;
-          this.speed = speed;
-        }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-        }
-        update() {
-          this.x += this.dx * this.speed;
-          this.y += this.dy * this.speed;
-        }
-        intersects(target) {
-          const dx = this.x - target.x;
-          const dy = this.y - target.y;
-          return Math.sqrt(dx * dx + dy * dy) < (this.size + target.size) / 2;
-        }
-      }
-      class Wall {
-        constructor(x, y, width, height, color) {
-          this.x = x;
-          this.y = y;
-          this.width = width;
-          this.height = height;
-          this.color = color;
-        }
-        render(ctx) {
-          ctx.fillStyle = this.color;
-          ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
-        intersects(x, y, size) {
-          const playerLeft = x - size/2;
-          const playerRight = x + size/2;
-          const playerTop = y - size/2;
-          const playerBottom = y + size/2;
-          return !(
-            playerRight < this.x ||
-            playerLeft > this.x + this.width ||
-            playerBottom < this.y ||
-            playerTop > this.y + this.height
-          );
-        }
-      }
-      function getRandomWeaponType() {
-        const types = ['Sword', 'Spear', 'Bow', 'Wand'];
-        return types[Math.floor(Math.random() * types.length)];
-      }
-      function getWeaponStats(type) {
-        const stats = {
-          'Sword': { damage: 10, speed: 1 },
-          'Spear': { damage: 15, speed: 0.8 },
-          'Bow': { damage: 5, speed: 1.2, projectileSpeed: 10 },
-          'Wand': { damage: 8, speed: 1, projectileSpeed: 8 }
-        };
-        return stats[type];
-      }
+
+      // Initialize game
       function init() {
         canvas = document.getElementById('gameCanvas');
         ctx = canvas.getContext('2d');
-        document.addEventListener('keydown', keyDownHandler, false);
-        document.addEventListener('keyup', keyUpHandler, false);
-        document.addEventListener('mousedown', mouseDownHandler, false);
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Initialize player and game elements
         player = new Player(400, 300, 20, 'red');
         generateDungeon();
+        
+        // Add keyboard controls for desktop
+        if (!isMobile) {
+          document.addEventListener('keydown', keyDownHandler, false);
+          document.addEventListener('keyup', keyUpHandler, false);
+          canvas.addEventListener('mousedown', mouseDownHandler, false);
+        }
+
+        // Start game loop
         requestAnimationFrame(gameLoop);
       }
+
+      class Weapon {
+  constructor(x, y, size, color, type) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.color = color;
+    this.type = type;
+    this.stats = getWeaponStats(type);
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    
+    ctx.fillStyle = 'white';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.type[0], this.x, this.y + 4);
+  }
+
+  use(x, y, targetX, targetY) {
+    if (this.type === 'Bow' || this.type === 'Wand') {
+      const angle = Math.atan2(targetY - y, targetX - x);
+      const speed = this.stats.projectileSpeed;
+      return new Projectile(
+        x,
+        y,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed,
+        10,
+        this.type === 'Bow' ? 'brown' : 'blue',
+        this.stats.damage
+      );
+    } else {
+      return {
+        damage: this.stats.damage,
+        range: this.size * 2
+      };
+    }
+  }
+}
+
+class Projectile {
+  constructor(x, y, dx, dy, size, color, damage) {
+    this.x = x;
+    this.y = y;
+    this.dx = dx;
+    this.dy = dy;
+    this.size = size;
+    this.color = color;
+    this.damage = damage;
+    this.active = true;
+  }
+
+  update() {
+    this.x += this.dx;
+    this.y += this.dy;
+    
+    if (this.x < 0 || this.x > dungeonWidth || 
+        this.y < 0 || this.y > dungeonHeight) {
+      this.active = false;
+    }
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  intersects(target) {
+    const dx = this.x - target.x;
+    const dy = this.y - target.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < (this.size + target.size) / 2;
+  }
+}
+
+function keyDownHandler(e) {
+  if (gameOver) return;
+  keys[e.key.toLowerCase()] = true;
+  
+  // Prevent default for game controls
+  if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+function keyUpHandler(e) {
+  keys[e.key.toLowerCase()] = false;
+}
+
+function mouseDownHandler(e) {
+  if (gameOver) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left + cameraX;
+  const mouseY = e.clientY - rect.top + cameraY;
+  
+  if (currentWeapon) {
+    if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
+      shootProjectile(mouseX, mouseY);
+    } else {
+      meleeAttack(mouseX, mouseY);
+    }
+  }
+}
+
+function shootProjectile(targetX, targetY) {
+  if (!currentWeapon) return;
+  
+  const projectile = currentWeapon.use(player.x, player.y, targetX, targetY);
+  if (projectile) {
+    projectiles.push(projectile);
+  }
+}
+
+function meleeAttack(targetX, targetY) {
+  if (!currentWeapon) return;
+  
+  const attack = currentWeapon.use(player.x, player.y, targetX, targetY);
+  const range = attack.range;
+  const damage = attack.damage;
+  
+  // Check enemy hits
+  enemies = enemies.filter(enemy => {
+    const dx = enemy.x - player.x;
+    const dy = enemy.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance <= range) {
+      enemy.health -= damage;
+      if (enemy.health <= 0) {
+        score += 10;
+        return false;
+      }
+    }
+    return true;
+  });
+  
+  // Check boss hit
+  if (boss) {
+    const dx = boss.x - player.x;
+    const dy = boss.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance <= range) {
+      boss.health -= damage;
+      if (boss.health <= 0) {
+        score += 100;
+        boss = null;
+      }
+    }
+  }
+}
+
+function updateProjectiles() {
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const projectile = projectiles[i];
+    projectile.update();
+    
+    // Check enemy hits
+    enemies = enemies.filter(enemy => {
+      if (projectile.active && projectile.intersects(enemy)) {
+        enemy.health -= projectile.damage;
+        projectile.active = false;
+        if (enemy.health <= 0) {
+          score += 10;
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    // Check boss hit
+    if (boss && projectile.active && projectile.intersects(boss)) {
+      boss.health -= projectile.damage;
+      projectile.active = false;
+      if (boss.health <= 0) {
+        score += 100;
+        boss = null;
+      }
+    }
+    
+    // Remove inactive projectiles
+    if (!projectile.active) {
+      projectiles.splice(i, 1);
+    }
+  }
+}
+
+function checkWeaponPickup() {
+  weapons.forEach((weapon, index) => {
+    if (player.intersects(weapon)) {
+      inventory.push(weapon);
+      weapons.splice(index, 1);
+      if (!currentWeapon) currentWeapon = weapon;
+      updateInventoryUI();
+    }
+  });
+}
+
+function updateInventoryUI() {
+  const inventoryBar = document.getElementById('inventoryBar');
+  inventoryBar.innerHTML = '';
+
+  inventory.forEach((weapon, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'invItem';
+    if (currentWeapon === weapon) {
+      slot.classList.add('active');
+    }
+    
+    slot.innerHTML = `<div style="color: white; text-align: center; line-height: 50px;">${weapon.type[0]}</div>`;
+    
+    slot.addEventListener('click', () => {
+      currentWeapon = weapon;
+      updateInventoryUI();
+    });
+
+    if (!isMobile) {
+      const keyHint = document.createElement('div');
+      keyHint.style.position = 'absolute';
+      keyHint.style.top = '2px';
+      keyHint.style.left = '2px';
+      keyHint.style.fontSize = '10px';
+      keyHint.textContent = index + 1;
+      slot.appendChild(keyHint);
+    }
+
+    inventoryBar.appendChild(slot);
+  });
+}
+// Add keyboard shortcuts for inventory selection
+document.addEventListener('keydown', (e) => {
+  if (!isMobile) {
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= inventory.length) {
+      currentWeapon = inventory[num - 1];
+      updateInventoryUI();
+    }
+  }
+});
+
       function gameLoop() {
         if (!gameOver) {
           update();
@@ -436,6 +695,251 @@
         }
         requestAnimationFrame(gameLoop);
       }
+	function generateDungeon() {
+  enemies = [];
+  boss = null;
+  weapons = [];
+  projectiles = [];
+  portal = null;
+  walls = [];
+
+  // Generate walls
+  for (let i = 0; i < 10; i++) {
+    const wallX = Math.random() * (dungeonWidth - 200);
+    const wallY = Math.random() * (dungeonHeight - 200);
+    const wallWidth = 50 + Math.random() * 150;
+    const wallHeight = 50 + Math.random() * 150;
+    walls.push(new Wall(wallX, wallY, wallWidth, wallHeight, 'gray'));
+  }
+
+  // Generate enemies
+  for (let i = 0; i < 10 + dungeonLevel * 2; i++) {
+    const x = Math.random() * (dungeonWidth - 40) + 20;
+    const y = Math.random() * (dungeonHeight - 40) + 20;
+    const enemySize = 20 + dungeonLevel * 2;
+    const enemyHealth = 20 + dungeonLevel * 5;
+    enemies.push(new Enemy(x, y, enemySize, 'green', enemyHealth));
+  }
+
+  // Generate boss
+  const bossX = Math.random() * (dungeonWidth - 60) + 30;
+  const bossY = Math.random() * (dungeonHeight - 60) + 30;
+  const bossSize = 40 + dungeonLevel * 5;
+  const bossHealth = 100 + dungeonLevel * 50;
+  boss = new Boss(bossX, bossY, bossSize, 'purple', bossHealth);
+
+  // Generate weapon
+  const weaponX = Math.random() * (dungeonWidth - 40) + 20;
+  const weaponY = Math.random() * (dungeonHeight - 40) + 20;
+  const weaponType = getRandomWeaponType();
+  weapons.push(new Weapon(weaponX, weaponY, 20, 'brown', weaponType));
+
+  updateInventoryUI();
+}
+
+function generatePortal() {
+  const portalSize = 40;
+  const portalX = Math.random() * (dungeonWidth - portalSize) + portalSize/2;
+  const portalY = Math.random() * (dungeonHeight - portalSize) + portalSize/2;
+  portal = new Portal(portalX, portalY, portalSize, 'yellow');
+}
+
+class Enemy {
+  constructor(x, y, size, color, health) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.color = color;
+    this.health = health;
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    const barWidth = 30, barHeight = 5;
+    const barX = this.x - barWidth/2;
+    const barY = this.y - this.size/2 - 10;
+    ctx.fillStyle = 'limegreen';
+    ctx.fillRect(barX, barY, barWidth * (this.health/100), barHeight);
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+  }
+
+  update(player) {
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < 300) {
+      const speed = 1;
+      this.x += (dx / distance) * speed;
+      this.y += (dy / distance) * speed;
+    }
+  }
+}
+
+class Boss {
+  constructor(x, y, size, color, health) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.color = color;
+    this.health = health;
+    this.maxHealth = health;
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    const barWidth = this.size, barHeight = 5;
+    const barX = this.x - barWidth/2;
+    const barY = this.y - this.size/2 - 10;
+    ctx.fillStyle = 'limegreen';
+    ctx.fillRect(barX, barY, barWidth * (this.health/this.maxHealth), barHeight);
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+  }
+
+  update(player) {
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const angle = Math.atan2(dy, dx);
+    this.x += Math.cos(angle) * 1;
+    this.y += Math.sin(angle) * 1;
+  }
+}
+
+class Portal {
+  constructor(x, y, size, color) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.color = color;
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+  }
+}
+
+class Wall {
+  constructor(x, y, width, height, color) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.color = color;
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  intersects(x, y, size) {
+    const playerLeft = x - size/2;
+    const playerRight = x + size/2;
+    const playerTop = y - size/2;
+    const playerBottom = y + size/2;
+    return !(
+      playerRight < this.x ||
+      playerLeft > this.x + this.width ||
+      playerBottom < this.y ||
+      playerTop > this.y + this.height
+    );
+  }
+}
+
+function getRandomWeaponType() {
+  const types = ['Sword', 'Spear', 'Bow', 'Wand'];
+  return types[Math.floor(Math.random() * types.length)];
+}
+
+function getWeaponStats(type) {
+  const stats = {
+    'Sword': { damage: 10, speed: 1 },
+    'Spear': { damage: 15, speed: 0.8 },
+    'Bow': { damage: 5, speed: 1.2, projectileSpeed: 10 },
+    'Wand': { damage: 8, speed: 1, projectileSpeed: 8 }
+  };
+  return stats[type];
+}
+
+function checkEnemyCollisions() {
+  enemies.forEach(enemy => {
+    if (player.intersects(enemy)) damagePlayer();
+  });
+}
+
+function checkBossCollision() {
+  if (boss && player.intersects(boss)) damagePlayer();
+}
+
+function damagePlayer() {
+  player.health -= 10;
+  if (player.health <= 0) gameOver = true;
+}
+
+function checkDungeonCompletion() {
+  if (enemies.length === 0 && !boss) {
+    dungeonLevel++;
+    score += 100 * dungeonLevel;
+    generateDungeon();
+  } else if (enemies.length === 0 && boss && boss.health <= 0) {
+    boss = null;
+    score += 500 * dungeonLevel;
+    generatePortal();
+  }
+}
+
+function checkPortalCollision() {
+  if (portal && player.intersects(portal)) {
+    dungeonLevel++;
+    score += 100 * dungeonLevel;
+    player.health = 100;
+    generateDungeon();
+    portal = null;
+  }
+}
+
+function updateEnemies() {
+  enemies.forEach(enemy => enemy.update(player));
+  if (boss) boss.update(player);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(-cameraX, -cameraY);
+  
+  // Render dungeon boundary
+  ctx.strokeStyle = 'white';
+  ctx.strokeRect(0, 0, dungeonWidth, dungeonHeight);
+  
+  // Render game elements
+  walls.forEach(wall => wall.render(ctx));
+  weapons.forEach(weapon => weapon.render(ctx));
+  enemies.forEach(enemy => enemy.render(ctx));
+  if (boss) boss.render(ctx);
+  if (portal) portal.render(ctx);
+  projectiles.forEach(projectile => projectile.render(ctx));
+  player.render(ctx);
+  
+  ctx.restore();
+}
+
+function renderGameOver() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = 'white';
+  ctx.font = '48px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Over', canvas.width/2, canvas.height/2 - 24);
+  
+  ctx.font = '24px Arial';
+  ctx.fillText(`Final Score: ${score}`, canvas.width/2, canvas.height/2 + 24);
+}
       function update() {
         handlePlayerMovement();
         checkEnemyCollisions();
@@ -445,309 +949,31 @@
         checkWeaponPickup();
         updateEnemies();
         if (portal) checkPortalCollision();
-        document.getElementById("healthFill").style.width = player.health + "px";
+        
+        // Update HUD
+        document.getElementById("healthFill").style.width = 
+          (player.health / player.maxHealth * 150) + "px";
         document.getElementById("scoreDisplay").innerText = "Score: " + score;
       }
-      function render() {
-        ctx.clearRect(0, 0, 800, 600);
-        ctx.save();
-        ctx.translate(-cameraX, -cameraY);
-        renderDungeonBoundary();
-        walls.forEach(wall => wall.render(ctx));
-        player.render(ctx);
-        enemies.forEach(enemy => enemy.render(ctx));
-        if (boss) boss.render(ctx);
-        if (portal) portal.render(ctx);
-        weapons.forEach(weapon => weapon.render(ctx));
-        projectiles.forEach(projectile => projectile.render(ctx));
-        ctx.restore();
-      }
-      function renderGameOver() {
-        ctx.clearRect(0, 0, 800, 600);
-        ctx.fillStyle = 'white';
-        ctx.font = '48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Game Over', 400, 300 - 24);
-        ctx.font = '24px Arial';
-        ctx.fillText(`Final Score: ${score}`, 400, 300 + 24);
-      }
-      function renderDungeonBoundary() {
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, dungeonWidth, dungeonHeight);
-      }
-      function handlePlayerMovement() {
-        const speed = 200 / 60;
-        let newX = player.x;
-        let newY = player.y;
-        if (keys['a'] || keys['ArrowLeft']) newX -= speed;
-        if (keys['d'] || keys['ArrowRight']) newX += speed;
-        if (keys['w'] || keys['ArrowUp']) newY -= speed;
-        if (keys['s'] || keys['ArrowDown']) newY += speed;
-        newX = Math.max(Math.min(newX, dungeonWidth - player.size), player.size);
-        newY = Math.max(Math.min(newY, dungeonHeight - player.size), player.size);
-        let collision = false;
-        for (let wall of walls) {
-          if (wall.intersects(newX, newY, player.size)) {
-            collision = true;
-            break;
-          }
-        }
-        if (!collision) {
-          player.x = newX;
-          player.y = newY;
-        }
-        cameraX = Math.max(Math.min(player.x - 400, dungeonWidth - 800), 0);
-        cameraY = Math.max(Math.min(player.y - 300, dungeonHeight - 600), 0);
-      }
-      function checkEnemyCollisions() {
-        enemies.forEach(enemy => {
-          if (player.intersects(enemy)) damagePlayer();
-        });
-      }
-      function checkBossCollision() {
-        if (boss && player.intersects(boss)) damagePlayer();
-      }
-      function damagePlayer() {
-        player.health -= 10;
-        if (player.health <= 0) gameOver = true;
-      }
-      function checkDungeonCompletion() {
-        if (enemies.length === 0 && !boss) {
-          dungeonLevel++;
-          score += 100 * dungeonLevel;
-          generateDungeon();
-        } else if (enemies.length === 0 && boss && boss.health <= 0) {
-          boss = null;
-          score += 500 * dungeonLevel;
-          generatePortal();
-        }
-      }
-      function generateDungeon() {
-        enemies = [];
-        boss = null;
-        weapons = [];
-        projectiles = [];
-        portal = null;
-        walls = [];
-        for (let i = 0; i < 10; i++) {
-          const wallX = Math.random() * (dungeonWidth - 200);
-          const wallY = Math.random() * (dungeonHeight - 200);
-          const wallWidth = 50 + Math.random() * 150;
-          const wallHeight = 50 + Math.random() * 150;
-          walls.push(new Wall(wallX, wallY, wallWidth, wallHeight, 'gray'));
-        }
-        for (let i = 0; i < 10 + dungeonLevel * 2; i++) {
-          const x = Math.random() * (dungeonWidth - 40) + 20;
-          const y = Math.random() * (dungeonHeight - 40) + 20;
-          const enemySize = 20 + dungeonLevel * 2;
-          const enemyHealth = 20 + dungeonLevel * 5;
-          enemies.push(new Enemy(x, y, enemySize, 'green', enemyHealth));
-        }
-        const bossX = Math.random() * (dungeonWidth - 60) + 30;
-        const bossY = Math.random() * (dungeonHeight - 60) + 30;
-        const bossSize = 40 + dungeonLevel * 5;
-        const bossHealth = 100 + dungeonLevel * 50;
-        boss = new Boss(bossX, bossY, bossSize, 'purple', bossHealth);
-        const weaponX = Math.random() * (dungeonWidth - 40) + 20;
-        const weaponY = Math.random() * (dungeonHeight - 40) + 20;
-        const weaponType = getRandomWeaponType();
-        weapons.push(new Weapon(weaponX, weaponY, 20, 'brown', weaponType));
-        updateInventoryUI();
-      }
-      function generatePortal() {
-        const portalSize = 40;
-        const portalX = Math.random() * (dungeonWidth - portalSize) + portalSize/2;
-        const portalY = Math.random() * (dungeonHeight - portalSize) + portalSize/2;
-        portal = new Portal(portalX, portalY, portalSize, 'yellow');
-      }
-      function checkPortalCollision() {
-        if (player.intersects(portal)) {
-          dungeonLevel++;
-          score += 100 * dungeonLevel;
-          player.health = 100;
-          generateDungeon();
-          portal = null;
-        }
-      }
-      function checkWeaponPickup() {
-        weapons.forEach((weapon, index) => {
-          if (weapon.intersects(player)) {
-            inventory.push(weapon);
-            weapons.splice(index, 1);
-            if (!currentWeapon) currentWeapon = weapon;
-            updateInventoryUI();
-          }
-        });
-      }
-      function updateProjectiles() {
-        projectiles.forEach((projectile, index) => {
-          projectile.update();
-          enemies.forEach((enemy, enemyIndex) => {
-            if (projectile.intersects(enemy)) {
-              enemy.health -= currentWeapon.stats.damage;
-              if (enemy.health <= 0) enemies.splice(enemyIndex, 1);
-              setTimeout(() => { projectiles.splice(index, 1); }, 100);
-            }
-          });
-          if (boss && projectile.intersects(boss)) {
-            boss.health -= currentWeapon.stats.damage;
-            if (boss.health <= 0) {
-              boss = null;
-              score += 500 * dungeonLevel;
-              generatePortal();
-            }
-            setTimeout(() => { projectiles.splice(index, 1); }, 100);
-          }
-          if (projectile.speed === 0) {
-            setTimeout(() => { projectiles.splice(index, 1); }, 100);
-          }
-        });
-      }
-      function updateEnemies() {
-        enemies.forEach(enemy => enemy.update(player));
-        if (boss) boss.update(player);
-      }
-      function mouseDownHandler(e) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = 800 / rect.width;
-        const scaleY = 600 / rect.height;
-        const clientX = (e.clientX - rect.left) * scaleX;
-        const clientY = (e.clientY - rect.top) * scaleY;
-        if (currentWeapon && (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand')) {
-          shootProjectile(clientX + cameraX, clientY + cameraY);
-        } else {
-          meleeAttack(clientX + cameraX, clientY + cameraY);
-        }
-      }
-      function shootProjectile(targetX, targetY) {
-        if (currentWeapon && (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand')) {
-          const angle = Math.atan2(targetY - player.y, targetX - player.x);
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-          const speed = currentWeapon.stats.projectileSpeed;
-          const color = currentWeapon.type === 'Bow' ? 'white' : 'orange';
-          projectiles.push(new Projectile(player.x, player.y, 5, color, dx, dy, speed));
-        }
-      }
-      function meleeAttack(targetX, targetY) {
-        if (currentWeapon && (currentWeapon.type === 'Sword' || currentWeapon.type === 'Spear')) {
-          const angle = Math.atan2(targetY - player.y, targetX - player.x);
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-          const attackRange = 50;
-          const slashLength = 20;
-          const startX = player.x + dx * attackRange;
-          const startY = player.y + dy * attackRange;
-          const endX = player.x - dx * attackRange;
-          const endY = player.y - dy * attackRange;
-          projectiles.push(new Projectile(startX, startY, slashLength, 'yellow', dx, dy, 0));
-          projectiles.push(new Projectile(endX, endY, slashLength, 'yellow', dx, dy, 0));
-          enemies.forEach((enemy, enemyIndex) => {
-            if (Math.sqrt((enemy.x - player.x)**2 + (enemy.y - player.y)**2) <= attackRange) {
-              enemy.health -= currentWeapon.stats.damage;
-              if (enemy.health <= 0) enemies.splice(enemyIndex, 1);
-            }
-          });
-          if (boss && Math.sqrt((boss.x - player.x)**2 + (boss.y - player.y)**2) <= attackRange) {
-            boss.health -= currentWeapon.stats.damage;
-            if (boss.health <= 0) {
-              boss = null;
-              score += 500 * dungeonLevel;
-              generatePortal();
-            }
-          }
-        }
-      }
-      function keyDownHandler(e) {
-        keys[e.key] = true;
-        if (e.key === '1' && inventory.length > 0) currentWeapon = inventory[0];
-        if (e.key === '2' && inventory.length > 1) currentWeapon = inventory[1];
-        if (e.key === '3' && inventory.length > 2) currentWeapon = inventory[2];
-        if (e.key === '4' && inventory.length > 3) currentWeapon = inventory[3];
-        updateInventoryUI();
-      }
-      function keyUpHandler(e) {
-        keys[e.key] = false;
-      }
-      function updateInventoryUI() {
-        const invBar = document.getElementById('inventoryBar');
-        invBar.innerHTML = '';
-        inventory.forEach((item) => {
-          const img = document.createElement('img');
-          img.src = weaponIcons[item.type] || '';
-          img.alt = item.type;
-          img.className = "invItem" + (currentWeapon === item ? " active" : "");
-          img.addEventListener('click', () => {
-            currentWeapon = item;
-            updateInventoryUI();
-          });
-          invBar.appendChild(img);
-        });
-      }
-      // Touch Controls: Joystick
-      const joystick = document.getElementById("joystick");
-      const joystickContainer = document.getElementById("joystickContainer");
-      let joystickActive = false;
-      const joystickCenter = { x: joystickContainer.offsetWidth / 2, y: joystickContainer.offsetHeight / 2 };
-      let joystickDirection = { x: 0, y: 0 };
-      function updateJoystickPosition(clientX, clientY) {
-        const rect = joystickContainer.getBoundingClientRect();
-        let deltaX = clientX - rect.left - joystickCenter.x;
-        let deltaY = clientY - rect.top - joystickCenter.y;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const maxDistance = (joystickContainer.offsetWidth - joystick.offsetWidth) / 2;
-        if (distance > maxDistance) {
-          const angle = Math.atan2(deltaY, deltaX);
-          deltaX = Math.cos(angle) * maxDistance;
-          deltaY = Math.sin(angle) * maxDistance;
-        }
-        joystick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-        joystickDirection.x = deltaX / maxDistance;
-        joystickDirection.y = deltaY / maxDistance;
-      }
-      joystick.addEventListener("touchstart", (e) => {
-        joystickActive = true;
-        updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
-        e.preventDefault();
-      });
-      joystick.addEventListener("touchmove", (e) => {
-        if (joystickActive) {
-          updateJoystickPosition(e.touches[0].clientX, e.touches[0].clientY);
-        }
-        e.preventDefault();
-      });
-      joystick.addEventListener("touchend", (e) => {
-        joystickActive = false;
-        joystick.style.transform = "translate(0px, 0px)";
-        joystickDirection = { x: 0, y: 0 };
-        e.preventDefault();
-      });
-      // Action Button
-      document.getElementById("actionButton").addEventListener("touchstart", () => {
-        if (currentWeapon) {
-          if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
-            shootProjectile(player.x, player.y);
-          } else {
-            meleeAttack(player.x, player.y);
-          }
-        }
-      });
-      document.getElementById("actionButton").addEventListener("click", () => {
-        if (currentWeapon) {
-          if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
-            shootProjectile(player.x, player.y);
-          } else {
-            meleeAttack(player.x, player.y);
-          }
-        }
-      });
+
+      // [Include the rest of your game functions...]
+
       // Start Screen Launch
       document.getElementById('startButton').addEventListener('click', () => {
         document.getElementById('startScreen').style.display = 'none';
         document.getElementById('container').style.display = 'flex';
         init();
       });
+
+      // Service Worker Registration
+      // PWA Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registered', reg))
+          .catch(err => console.error('Service Worker registration failed', err));
+      }
+
+    
     </script>
   </body>
 </html>
