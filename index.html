@@ -289,7 +289,7 @@
       }
 
       // [Include all your other class definitions: Enemy, Boss, Portal, Weapon, Projectile, Wall]
-      // [These remain unchanged from your original code]
+    
 
       // Mobile Controls Setup
       if (isMobile) {
@@ -460,26 +460,23 @@
     ctx.fillText(this.type[0], this.x, this.y + 4);
   }
 
-  use(x, y, targetX, targetY) {
-    if (this.type === 'Bow' || this.type === 'Wand') {
-      const angle = Math.atan2(targetY - y, targetX - x);
+ use(x, y, targetX, targetY) {
+  if (this.type === 'Bow') {
+    const angle = Math.atan2(targetY - y, targetX - x);
+    const speed = this.stats.projectileSpeed;
+    return [new Projectile(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, 10, 'brown', this.stats.damage)];
+  } else if (this.type === 'Wand') {
+    const projectiles = [];
+    for (let i = 0; i < 360; i += 45) {
+      const angle = i * (Math.PI / 180);
       const speed = this.stats.projectileSpeed;
-      return new Projectile(
-        x,
-        y,
-        Math.cos(angle) * speed,
-        Math.sin(angle) * speed,
-        10,
-        this.type === 'Bow' ? 'brown' : 'blue',
-        this.stats.damage
-      );
-    } else {
-      return {
-        damage: this.stats.damage,
-        range: this.size * 2
-      };
+      projectiles.push(new Projectile(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, 10, 'blue', this.stats.damage));
     }
+    return projectiles;
+  } else {
+    return { damage: this.stats.damage, range: this.size * 2 };
   }
+}
 }
 
 class Projectile {
@@ -551,10 +548,10 @@ function mouseDownHandler(e) {
 
 function shootProjectile(targetX, targetY) {
   if (!currentWeapon) return;
-  
-  const projectile = currentWeapon.use(player.x, player.y, targetX, targetY);
-  if (projectile) {
-    projectiles.push(projectile);
+
+  const projectiles = currentWeapon.use(player.x, player.y, targetX, targetY);
+  if (projectiles) {
+    projectiles.forEach(projectile => projectiles.push(projectile));
   }
 }
 
@@ -850,16 +847,15 @@ class Wall {
 }
 
 function getRandomWeaponType() {
-  const types = ['Sword', 'Spear', 'Bow', 'Wand'];
+  const types = ['Sword', 'Bow', 'Wand'];
   return types[Math.floor(Math.random() * types.length)];
 }
 
 function getWeaponStats(type) {
   const stats = {
-    'Sword': { damage: 10, speed: 1 },
-    'Spear': { damage: 15, speed: 0.8 },
-    'Bow': { damage: 5, speed: 1.2, projectileSpeed: 10 },
-    'Wand': { damage: 8, speed: 1, projectileSpeed: 8 }
+    'Sword': { damage: 5, speed: 1 },
+    'Bow': { damage: 10, speed: 1.2, projectileSpeed: 10 },
+    'Wand': { damage: 15, speed: 1, projectileSpeed: 8 }
   };
   return stats[type];
 }
