@@ -143,51 +143,51 @@
       }
 
       #touchControls {
-        display: none;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 150px;
-        z-index: 100;
-      }
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  z-index: 100;
+}
 
-      #joystickArea {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        width: 120px;
-        height: 120px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-      }
+#joystickArea {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
 
-      #joystick {
-        position: absolute;
-        width: 50px;
-        height: 50px;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 50%;
-        top: 35px;
-        left: 35px;
-      }
+#joystick {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  top: 35px;
+  left: 35px;
+}
 
-      #actionButton {
-        position: absolute;
-        bottom: 40px;
-        right: 40px;
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 2px solid #fff;
-        border-radius: 50%;
-        color: #fff;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
+#actionButton {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 
       @media (max-width: 768px) {
         #touchControls {
@@ -238,11 +238,11 @@
         <canvas id="gameCanvas"></canvas>
         
         <div id="touchControls">
-          <div id="joystickArea">
-            <div id="joystick"></div>
-          </div>
-          <button id="actionButton">Attack</button>
-        </div>
+  <div id="joystickArea">
+    <div id="joystick"></div>
+  </div>
+  <button id="actionButton">Attack</button>
+</div>
       </div>
     </div>
 
@@ -430,12 +430,11 @@
         player = new Player(400, 300, 20, 'red');
         generateDungeon();
         
-        // Add keyboard controls for desktop
         if (!isMobile) {
-          document.addEventListener('keydown', keyDownHandler, false);
-          document.addEventListener('keyup', keyUpHandler, false);
-          canvas.addEventListener('mousedown', mouseDownHandler, false);
-        }
+  document.addEventListener('keydown', keyDownHandler, false);
+  document.addEventListener('keyup', keyUpHandler, false);
+  canvas.addEventListener('mousedown', mouseDownHandler, false);
+}
 
         // Start game loop
         requestAnimationFrame(gameLoop);
@@ -536,11 +535,11 @@ function keyUpHandler(e) {
 
 function mouseDownHandler(e) {
   if (gameOver) return;
-  
+
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left + cameraX;
   const mouseY = e.clientY - rect.top + cameraY;
-  
+
   if (currentWeapon) {
     if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
       shootProjectile(mouseX, mouseY);
@@ -956,7 +955,6 @@ function renderGameOver() {
         document.getElementById("scoreDisplay").innerText = "Score: " + score;
       }
 
-      // [Include the rest of your game functions...]
 
       // Start Screen Launch
       document.getElementById('startButton').addEventListener('click', () => {
