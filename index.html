@@ -785,12 +785,12 @@ class Boss {
 
   render(ctx) {
     ctx.fillStyle = this.color;
-    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
     const barWidth = this.size, barHeight = 5;
-    const barX = this.x - barWidth/2;
-    const barY = this.y - this.size/2 - 10;
+    const barX = this.x - barWidth / 2;
+    const barY = this.y - this.size / 2 - 10;
     ctx.fillStyle = 'limegreen';
-    ctx.fillRect(barX, barY, barWidth * (this.health/this.maxHealth), barHeight);
+    ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
     ctx.strokeStyle = 'black';
     ctx.strokeRect(barX, barY, barWidth, barHeight);
   }
@@ -803,7 +803,7 @@ class Boss {
     this.y += Math.sin(angle) * 1;
   }
 }
-
+	    
 class Portal {
   constructor(x, y, size, color) {
     this.x = x;
@@ -873,6 +873,13 @@ function checkBossCollision() {
 function damagePlayer() {
   player.health -= 10;
   if (player.health <= 0) gameOver = true;
+}
+
+function generatePortal() {
+  const portalSize = 40;
+  const portalX = Math.random() * (dungeonWidth - portalSize) + portalSize / 2;
+  const portalY = Math.random() * (dungeonHeight - portalSize) + portalSize / 2;
+  portal = new Portal(portalX, portalY, portalSize, 'yellow');
 }
 
 function checkDungeonCompletion() {
