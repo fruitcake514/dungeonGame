@@ -296,7 +296,6 @@
         const joystick = document.getElementById('joystick');
         const joystickArea = document.getElementById('joystickArea');
         let joystickActive = false;
-
         joystickArea.addEventListener('touchstart', handleJoystickStart);
         joystickArea.addEventListener('touchmove', handleJoystickMove);
         joystickArea.addEventListener('touchend', handleJoystickEnd);
@@ -378,6 +377,7 @@
         let newY = player.y;
 
         if (isMobile) {
+          document.getElementById('touchControls').style.display = 'block';
           // Mobile movement using joystick position
           newX += joystickPos.x * speed;
           newY += joystickPos.y * speed;
@@ -431,9 +431,12 @@
         generateDungeon();
         
         if (!isMobile) {
-  document.addEventListener('keydown', keyDownHandler, false);
-  document.addEventListener('keyup', keyUpHandler, false);
-  canvas.addEventListener('mousedown', mouseDownHandler, false);
+  document.addEventListener('keydown', keyDownHandler);
+  document.addEventListener('keyup', keyUpHandler);
+ canvas.addEventListener('click', mouseDownHandler);
+}
+if (isMobile) {
+    document.getElementById('touchControls').style.display = 'block';
 }
 
         // Start game loop
@@ -537,14 +540,15 @@ function mouseDownHandler(e) {
   const mouseX = e.clientX - rect.left + cameraX;
   const mouseY = e.clientY - rect.top + cameraY;
 
-  if (currentWeapon) {
-    if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
-      shootProjectile(mouseX, mouseY);
-    } else {
-      meleeAttack(mouseX, mouseY);
-    }
+  if (!currentWeapon) return; // Ensure a weapon is equipped
+  
+  if (currentWeapon.type === 'Bow' || currentWeapon.type === 'Wand') {
+    shootProjectile(mouseX, mouseY);
+  } else {
+    meleeAttack(mouseX, mouseY);
   }
 }
+
 
 function shootProjectile(targetX, targetY) {
   if (!currentWeapon) return;
@@ -691,7 +695,85 @@ document.addEventListener('keydown', (e) => {
         }
         requestAnimationFrame(gameLoop);
       }
-	function generateDungeon() {
+	// Update the score values when killing enemies in damagePlayer function
+function checkDungeonCompletion() {
+  if (enemies.length === 0 && !boss) {
+    dungeonLevel++;
+    score += 1000; // Bonus for clearing all enemies
+    generateDungeon();
+  } else if (enemies.length === 0 && boss && boss.health <= 0) {
+    boss = null;
+    score += 500; // Boss kill bonus
+    generatePortal();
+  }
+}
+
+// Update enemy death score in the shootProjectile function
+function shootProjectile(targetX, targetY) {
+  if (!currentWeapon) return;
+
+  const projectiles = currentWeapon.use(player.x, player.y, targetX, targetY);
+  if (projectiles) {
+    projectiles.forEach(projectile => {
+      // Check enemy hits
+      enemies = enemies.filter(enemy => {
+        if (projectile.active && projectile.intersects(enemy)) {
+          enemy.health -= projectile.damage;
+          projectile.active = false;
+          if (enemy.health <= 0) {
+            score += 100; // Enemy kill score
+            return false;
+          }
+        }
+        return true;
+      });
+    });
+  }
+}
+
+// Helper function to check if a position is valid (not inside walls)
+function isValidPosition(x, y, size) {
+  for (let wall of walls) {
+    if (wall.intersects(x, y, size)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Helper function to get a random valid position
+function getRandomValidPosition(size) {
+  let x, y;
+  let attempts = 0;
+  const maxAttempts = 100;
+
+  do {
+    x = Math.random() * (dungeonWidth - size * 2) + size;
+    y = Math.random() * (dungeonHeight - size * 2) + size;
+    attempts++;
+  } while (!isValidPosition(x, y, size) && attempts < maxAttempts);
+
+  if (attempts >= maxAttempts) {
+    // If we can't find a spot after max attempts, try to find any open corner
+    const corners = [
+      [size, size],
+      [dungeonWidth - size, size],
+      [size, dungeonHeight - size],
+      [dungeonWidth - size, dungeonHeight - size]
+    ];
+    
+    for (let [cornerX, cornerY] of corners) {
+      if (isValidPosition(cornerX, cornerY, size)) {
+        return { x: cornerX, y: cornerY };
+      }
+    }
+  }
+
+  return { x, y };
+}
+
+// Update generateDungeon to use valid positions
+function generateDungeon() {
   enemies = [];
   boss = null;
   weapons = [];
@@ -699,7 +781,7 @@ document.addEventListener('keydown', (e) => {
   portal = null;
   walls = [];
 
-  // Generate walls
+  // Generate walls first
   for (let i = 0; i < 10; i++) {
     const wallX = Math.random() * (dungeonWidth - 200);
     const wallY = Math.random() * (dungeonHeight - 200);
@@ -708,71 +790,348 @@ document.addEventListener('keydown', (e) => {
     walls.push(new Wall(wallX, wallY, wallWidth, wallHeight, 'gray'));
   }
 
-  // Generate enemies
+  // Generate enemies in valid positions
   for (let i = 0; i < 10 + dungeonLevel * 2; i++) {
-    const x = Math.random() * (dungeonWidth - 40) + 20;
-    const y = Math.random() * (dungeonHeight - 40) + 20;
     const enemySize = 20 + dungeonLevel * 2;
     const enemyHealth = 20 + dungeonLevel * 5;
-    enemies.push(new Enemy(x, y, enemySize, 'green', enemyHealth));
+    const pos = getRandomValidPosition(enemySize);
+    enemies.push(new Enemy(pos.x, pos.y, enemySize, 'green', enemyHealth));
   }
 
-  // Generate boss
-  const bossX = Math.random() * (dungeonWidth - 60) + 30;
-  const bossY = Math.random() * (dungeonHeight - 60) + 30;
+  // Generate boss in valid position
   const bossSize = 40 + dungeonLevel * 5;
   const bossHealth = 100 + dungeonLevel * 50;
-  boss = new Boss(bossX, bossY, bossSize, 'purple', bossHealth);
+  const bossPos = getRandomValidPosition(bossSize);
+  boss = new Boss(bossPos.x, bossPos.y, bossSize, 'purple', bossHealth);
 
-  // Generate weapon
-  const weaponX = Math.random() * (dungeonWidth - 40) + 20;
-  const weaponY = Math.random() * (dungeonHeight - 40) + 20;
+  // Generate weapon in valid position
+  const weaponPos = getRandomValidPosition(20);
   const weaponType = getRandomWeaponType();
-  weapons.push(new Weapon(weaponX, weaponY, 20, 'brown', weaponType));
+  weapons.push(new Weapon(weaponPos.x, weaponPos.y, 20, 'brown', weaponType));
 
   updateInventoryUI();
 }
 
+// Update enemy movement to respect walls
+function updateEnemyPosition(enemy, newX, newY) {
+  if (isValidPosition(newX, newY, enemy.size)) {
+    enemy.x = newX;
+    enemy.y = newY;
+    return true;
+  }
+  return false;
+}
+
+
+// Update portal generation to use valid position
 function generatePortal() {
   const portalSize = 40;
-  const portalX = Math.random() * (dungeonWidth - portalSize) + portalSize/2;
-  const portalY = Math.random() * (dungeonHeight - portalSize) + portalSize/2;
-  portal = new Portal(portalX, portalY, portalSize, 'yellow');
+  const portalPos = getRandomValidPosition(portalSize);
+  portal = new Portal(portalPos.x, portalPos.y, portalSize, 'yellow');
 }
 
 class Enemy {
-  constructor(x, y, size, color, health) {
+  constructor(x, y, size, color, health, type = 'basic') {
     this.x = x;
     this.y = y;
     this.size = size;
+    this.baseColor = color;
     this.color = color;
     this.health = health;
+    this.maxHealth = health;
+    this.type = type;
+    
+    // Movement properties
+    this.speed = this.getTypeSpeed();
+    this.direction = Math.random() * Math.PI * 2;
+    this.wanderTimer = 0;
+    this.wanderInterval = 60;
+    
+    // Attack properties
+    this.attackRange = this.getTypeRange();
+    this.damage = this.getTypeDamage();
+    this.attackCooldown = 0;
+    this.attackInterval = this.getTypeAttackInterval();
+    
+    // Special properties
+    this.projectiles = [];
+    this.dashCooldown = 0;
+    this.isCharging = false;
+    this.chargeTarget = null;
+    this.stunned = false;
+    this.stunDuration = 0;
+  }
+
+  getTypeSpeed() {
+    const speeds = {
+      'basic': 1,
+      'fast': 2,
+      'ranged': 0.7,
+      'tank': 0.5,
+      'berserker': 1.5
+    };
+    return speeds[this.type] || 1;
+  }
+
+  getTypeRange() {
+    const ranges = {
+      'basic': 30,
+      'fast': 25,
+      'ranged': 200,
+      'tank': 35,
+      'berserker': 40
+    };
+    return ranges[this.type] || 30;
+  }
+
+  getTypeDamage() {
+    const damages = {
+      'basic': 10,
+      'fast': 5,
+      'ranged': 8,
+      'tank': 15,
+      'berserker': 20
+    };
+    return damages[this.type] || 10;
+  }
+
+  getTypeAttackInterval() {
+    const intervals = {
+      'basic': 60,
+      'fast': 45,
+      'ranged': 90,
+      'tank': 120,
+      'berserker': 30
+    };
+    return intervals[this.type] || 60;
   }
 
   render(ctx) {
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-    const barWidth = 30, barHeight = 5;
+    // Base enemy shape
+    ctx.fillStyle = this.stunned ? '#666666' : this.color;
+    
+    if (this.type === 'tank') {
+      // Square with thick border
+      ctx.strokeStyle = '#444444';
+      ctx.lineWidth = 4;
+      ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+      ctx.strokeRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    } else if (this.type === 'ranged') {
+      // Diamond shape
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y - this.size/2);
+      ctx.lineTo(this.x + this.size/2, this.y);
+      ctx.lineTo(this.x, this.y + this.size/2);
+      ctx.lineTo(this.x - this.size/2, this.y);
+      ctx.closePath();
+      ctx.fill();
+    } else if (this.type === 'fast') {
+      // Triangle
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y - this.size/2);
+      ctx.lineTo(this.x + this.size/2, this.y + this.size/2);
+      ctx.lineTo(this.x - this.size/2, this.y + this.size/2);
+      ctx.closePath();
+      ctx.fill();
+    } else if (this.type === 'berserker') {
+      // Spiked square
+      const spikes = 8;
+      ctx.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        const angle = (i * Math.PI) / spikes;
+        const radius = i % 2 === 0 ? this.size/2 : this.size/3;
+        const x = this.x + Math.cos(angle) * radius;
+        const y = this.y + Math.sin(angle) * radius;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Basic square
+      ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    }
+
+    // Health bar
+    const barWidth = this.size * 1.5;
+    const barHeight = 5;
     const barX = this.x - barWidth/2;
     const barY = this.y - this.size/2 - 10;
+    
+    // Health bar background
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    // Current health
     ctx.fillStyle = 'limegreen';
-    ctx.fillRect(barX, barY, barWidth * (this.health/100), barHeight);
+    ctx.fillRect(barX, barY, barWidth * (this.health/this.maxHealth), barHeight);
+    
+    // Health bar border
     ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+    // Render projectiles for ranged enemies
+    if (this.type === 'ranged') {
+      this.projectiles.forEach(proj => {
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
   }
 
   update(player) {
+    if (this.stunned) {
+      this.stunDuration--;
+      if (this.stunDuration <= 0) {
+        this.stunned = false;
+      }
+      return;
+    }
+
+    // Update projectiles for ranged enemies
+    if (this.type === 'ranged') {
+      this.updateProjectiles(player);
+    }
+
     const dx = player.x - this.x;
     const dy = player.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance < 300) {
-      const speed = 1;
-      this.x += (dx / distance) * speed;
-      this.y += (dy / distance) * speed;
+
+    // Attack cooldown
+    if (this.attackCooldown > 0) {
+      this.attackCooldown--;
+    }
+
+    // Berserker rage mode
+    if (this.type === 'berserker' && this.health < this.maxHealth * 0.5) {
+      this.color = '#ff0000';
+      this.speed = this.getTypeSpeed() * 1.5;
+    }
+
+    // Movement and attack behavior based on type
+    if (distance < this.attackRange && this.attackCooldown <= 0) {
+      this.attack(player, distance);
+    } else if (distance < 300) {
+      this.moveTowardPlayer(dx, dy, distance);
+    } else {
+      this.wander();
+    }
+  }
+
+  attack(player, distance) {
+    switch(this.type) {
+      case 'ranged':
+        this.rangedAttack(player);
+        break;
+      case 'berserker':
+        this.berserkerAttack(player);
+        break;
+      case 'fast':
+        this.dashAttack(player);
+        break;
+      default:
+        this.meleeAttack(player, distance);
+    }
+    this.attackCooldown = this.attackInterval;
+  }
+
+  rangedAttack(player) {
+    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+    this.projectiles.push({
+      x: this.x,
+      y: this.y,
+      dx: Math.cos(angle) * 5,
+      dy: Math.sin(angle) * 5,
+      damage: this.damage
+    });
+  }
+
+  berserkerAttack(player) {
+    this.isCharging = true;
+    this.chargeTarget = {x: player.x, y: player.y};
+    this.speed *= 2;
+    setTimeout(() => {
+      this.isCharging = false;
+      this.speed = this.getTypeSpeed();
+    }, 500);
+  }
+
+  dashAttack(player) {
+    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+    const dashDistance = 100;
+    const newX = this.x + Math.cos(angle) * dashDistance;
+    const newY = this.y + Math.sin(angle) * dashDistance;
+    
+    if (isValidPosition(newX, newY, this.size)) {
+      this.x = newX;
+      this.y = newY;
+    } else {
+      this.stunned = true;
+      this.stunDuration = 30;
+    }
+  }
+
+  meleeAttack(player, distance) {
+    if (distance < this.attackRange) {
+      player.health -= this.damage;
+    }
+  }
+
+  moveTowardPlayer(dx, dy, distance) {
+    const newX = this.x + (dx / distance) * this.speed;
+    const newY = this.y + (dy / distance) * this.speed;
+    
+    if (isValidPosition(newX, newY, this.size)) {
+      this.x = newX;
+      this.y = newY;
+    }
+  }
+
+  wander() {
+    this.wanderTimer++;
+    if (this.wanderTimer >= this.wanderInterval) {
+      this.direction = Math.random() * Math.PI * 2;
+      this.wanderTimer = 0;
+    }
+
+    const newX = this.x + Math.cos(this.direction) * (this.speed * 0.5);
+    const newY = this.y + Math.sin(this.direction) * (this.speed * 0.5);
+    
+    if (isValidPosition(newX, newY, this.size)) {
+      this.x = newX;
+      this.y = newY;
+    } else {
+      this.direction += Math.PI;
+    }
+  }
+
+  updateProjectiles(player) {
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const proj = this.projectiles[i];
+      proj.x += proj.dx;
+      proj.y += proj.dy;
+      
+      // Check bounds
+      if (proj.x < 0 || proj.x > dungeonWidth || 
+          proj.y < 0 || proj.y > dungeonHeight) {
+        this.projectiles.splice(i, 1);
+        continue;
+      }
+      
+      // Check player collision
+      const dx = proj.x - player.x;
+      const dy = proj.y - player.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < (player.size + 5) / 2) {
+        player.health -= proj.damage;
+        this.projectiles.splice(i, 1);
+      }
     }
   }
 }
-
 class Boss {
   constructor(x, y, size, color, health) {
     this.x = x;
@@ -781,29 +1140,229 @@ class Boss {
     this.color = color;
     this.health = health;
     this.maxHealth = health;
+    
+    // Movement properties
+    this.speed = 2;
+    this.chargeSpeed = 6;
+    this.isCharging = false;
+    this.chargeTarget = { x: 0, y: 0 };
+    
+    // Attack properties
+    this.attackCooldown = 0;
+    this.attackInterval = 120; // frames between attacks
+    this.phase = 1; // boss gets harder as health decreases
+    this.projectiles = []; // store boss projectiles
+    
+    // State tracking
+    this.lastAttackType = null;
+    this.stunned = false;
+    this.stunDuration = 0;
   }
 
   render(ctx) {
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+    // Base boss render
+    ctx.fillStyle = this.stunned ? '#666666' : this.color;
+    ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+    
+    // Health bar
     const barWidth = this.size, barHeight = 5;
-    const barX = this.x - barWidth / 2;
-    const barY = this.y - this.size / 2 - 10;
+    const barX = this.x - barWidth/2;
+    const barY = this.y - this.size/2 - 10;
+    
+    // Health bar background
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    // Current health
     ctx.fillStyle = 'limegreen';
-    ctx.fillRect(barX, barY, barWidth * (this.health / this.maxHealth), barHeight);
+    ctx.fillRect(barX, barY, barWidth * (this.health/this.maxHealth), barHeight);
+    
+    // Health bar border
     ctx.strokeStyle = 'black';
     ctx.strokeRect(barX, barY, barWidth, barHeight);
+    
+    // Phase indicator
+    ctx.fillStyle = this.phase === 3 ? '#FF0000' : this.phase === 2 ? '#FFA500' : '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Render boss projectiles
+    this.projectiles.forEach(proj => {
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
   }
 
   update(player) {
+    if (this.stunned) {
+      this.stunDuration--;
+      if (this.stunDuration <= 0) {
+        this.stunned = false;
+      }
+      return;
+    }
+
+    // Update phase based on health
+    this.phase = this.health < this.maxHealth * 0.33 ? 3 :
+                 this.health < this.maxHealth * 0.66 ? 2 : 1;
+
+    // Update projectiles
+    this.updateProjectiles();
+    
+    // Handle attacks
+    this.attackCooldown--;
+    if (this.attackCooldown <= 0) {
+      this.performAttack(player);
+    }
+
+    // Movement
+    if (this.isCharging) {
+      this.handleCharge();
+    } else {
+      this.handleNormalMovement(player);
+    }
+  }
+
+  handleNormalMovement(player) {
     const dx = player.x - this.x;
     const dy = player.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > this.size * 2) {
+      const angle = Math.atan2(dy, dx);
+      const newX = this.x + Math.cos(angle) * this.speed;
+      const newY = this.y + Math.sin(angle) * this.speed;
+      
+      // Check for wall collisions before moving
+      if (isValidPosition(newX, newY, this.size)) {
+        this.x = newX;
+        this.y = newY;
+      }
+    }
+  }
+
+  handleCharge() {
+    const dx = this.chargeTarget.x - this.x;
+    const dy = this.chargeTarget.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 10) {
+      this.isCharging = false;
+      this.stunned = true;
+      this.stunDuration = 60; // 1 second stun
+      return;
+    }
+
     const angle = Math.atan2(dy, dx);
-    this.x += Math.cos(angle) * 1;
-    this.y += Math.sin(angle) * 1;
+    const newX = this.x + Math.cos(angle) * this.chargeSpeed;
+    const newY = this.y + Math.sin(angle) * this.chargeSpeed;
+    
+    if (isValidPosition(newX, newY, this.size)) {
+      this.x = newX;
+      this.y = newY;
+    } else {
+      this.isCharging = false;
+      this.stunned = true;
+      this.stunDuration = 30; // 0.5 second stun on wall hit
+    }
+  }
+
+  performAttack(player) {
+    const attacks = [
+      this.projectileAttack.bind(this),
+      this.chargeAttack.bind(this),
+      this.burstAttack.bind(this)
+    ];
+    
+    let attackIndex;
+    do {
+      attackIndex = Math.floor(Math.random() * attacks.length);
+    } while (attackIndex === this.lastAttackType);
+    
+    this.lastAttackType = attackIndex;
+    attacks[attackIndex](player);
+    
+    // Shorter cooldown in later phases
+    this.attackCooldown = this.attackInterval * (1.1 - this.phase * 0.2);
+  }
+
+  projectileAttack(player) {
+    const angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+    const projectileCount = this.phase === 3 ? 8 : this.phase === 2 ? 5 : 3;
+    
+    for (let i = 0; i < projectileCount; i++) {
+      const spread = (Math.PI / 8) * (Math.random() - 0.5);
+      const angle = angleToPlayer + spread;
+      this.projectiles.push({
+        x: this.x,
+        y: this.y,
+        dx: Math.cos(angle) * 5,
+        dy: Math.sin(angle) * 5,
+        size: 8,
+        color: '#FF0000',
+        damage: 10,
+        lifetime: 120
+      });
+    }
+  }
+
+  chargeAttack(player) {
+    this.isCharging = true;
+    this.chargeTarget = {
+      x: player.x,
+      y: player.y
+    };
+  }
+
+  burstAttack(player) {
+    const projectileCount = this.phase === 3 ? 16 : this.phase === 2 ? 12 : 8;
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = (i / projectileCount) * Math.PI * 2;
+      this.projectiles.push({
+        x: this.x,
+        y: this.y,
+        dx: Math.cos(angle) * 4,
+        dy: Math.sin(angle) * 4,
+        size: 6,
+        color: '#FF00FF',
+        damage: 8,
+        lifetime: 90
+      });
+    }
+  }
+
+  updateProjectiles() {
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const proj = this.projectiles[i];
+      proj.x += proj.dx;
+      proj.y += proj.dy;
+      proj.lifetime--;
+      
+      // Remove projectiles that are out of bounds or expired
+      if (proj.lifetime <= 0 || 
+          proj.x < 0 || proj.x > dungeonWidth ||
+          proj.y < 0 || proj.y > dungeonHeight) {
+        this.projectiles.splice(i, 1);
+        continue;
+      }
+      
+      // Check collision with player
+      const dx = proj.x - player.x;
+      const dy = proj.y - player.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < (proj.size + player.size) / 2) {
+        player.health -= proj.damage;
+        this.projectiles.splice(i, 1);
+      }
+    }
   }
 }
-	    
+
+
 class Portal {
   constructor(x, y, size, color) {
     this.x = x;
@@ -873,13 +1432,6 @@ function checkBossCollision() {
 function damagePlayer() {
   player.health -= 10;
   if (player.health <= 0) gameOver = true;
-}
-
-function generatePortal() {
-  const portalSize = 40;
-  const portalX = Math.random() * (dungeonWidth - portalSize) + portalSize / 2;
-  const portalY = Math.random() * (dungeonHeight - portalSize) + portalSize / 2;
-  portal = new Portal(portalX, portalY, portalSize, 'yellow');
 }
 
 function checkDungeonCompletion() {
