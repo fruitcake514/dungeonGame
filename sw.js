@@ -2,10 +2,9 @@ const CACHE_NAME = 'dungeon-crawler-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/game.js',
+  'https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js',
+  'https://cdn.jsdelivr.net/npm/phaser3-rex-plugins@1.1.59/dist/rexvirtualjoystickplugin.min.js'
 ];
 
 self.addEventListener('install', (event) => {
