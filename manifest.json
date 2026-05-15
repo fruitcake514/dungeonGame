@@ -1,11 +1,11 @@
 {
-  "name": "Dungeon Crawler: Ember & Blade",
-  "short_name": "Dungeon Crawler",
-  "description": "A cozy yet challenging procedurally generated dungeon crawler with dynamic lighting and upgrades.",
+  "name": "Ember & Blade: Dungeon Crawler",
+  "short_name": "Ember & Blade",
+  "description": "A Terraria-inspired fantasy mage dungeon crawler with dynamic lighting and upgrades.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#a8c686",
+  "background_color": "#0d1117",
+  "theme_color": "#4a148c",
   "orientation": "any",
   "icons": [
     {

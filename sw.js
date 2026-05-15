@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dungeon-crawler-v10';
+const CACHE_NAME = 'ember-blade-v11';
 const ASSETS = [
     './',
     './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
     './assets/sprites/skeleton.svg',
     './assets/sprites/zombie.svg',
     './assets/sprites/projectile.svg',
+    './assets/sprites/coin.svg',
     './assets/sprites/potion.svg',
     './assets/sprites/portal.svg',
     './assets/sprites/floor.svg',
