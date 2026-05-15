@@ -1,11 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" shape-rendering="crispEdges">
   <rect width="20" height="20" fill="#0000"/>
-  <rect x="5" y="2" width="10" height="6" fill="#a2bcc8"/>
-  <rect x="7" y="4" width="2" height="2" fill="#ff0000"/>
-  <rect x="11" y="4" width="2" height="2" fill="#ff0000"/>
-  <rect x="4" y="8" width="12" height="8" fill="#566c85"/>
-  <rect x="3" y="9" width="1" height="5" fill="#2f3f53"/>
-  <rect x="16" y="9" width="1" height="5" fill="#2f3f53"/>
-  <rect x="6" y="16" width="3" height="3" fill="#2f3f53"/>
-  <rect x="11" y="16" width="3" height="3" fill="#2f3f53"/>
+  <!-- Ancient Construct Head -->
+  <rect x="4" y="2" width="12" height="10" fill="#78909c"/> <!-- Main stone -->
+  <rect x="5" y="1" width="10" height="1" fill="#90a4ae"/> <!-- Top highlight -->
+  <!-- Red Glowing Eyes -->
+  <rect x="6" y="5" width="3" height="3" fill="#ff1744"/>
+  <rect x="11" y="5" width="3" height="3" fill="#ff1744"/>
+  <rect x="7" y="6" width="1" height="1" fill="#fff"/> <!-- Pupils -->
+  <rect x="12" y="6" width="1" height="1" fill="#fff"/>
+  <!-- Jaw/Lower part -->
+  <rect x="5" y="12" width="10" height="5" fill="#546e7a"/>
+  <rect x="6" y="17" width="2" height="2" fill="#455a64"/> <!-- Teeth-like blocks -->
+  <rect x="12" y="17" width="2" height="2" fill="#455a64"/>
+  <!-- Detail cracks -->
+  <rect x="14" y="3" width="1" height="2" fill="#37474f" fill-opacity="0.3"/>
+  <rect x="5" y="9" width="3" height="1" fill="#37474f" fill-opacity="0.3"/>
 </svg>

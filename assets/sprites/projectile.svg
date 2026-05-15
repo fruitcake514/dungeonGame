@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" shape-rendering="crispEdges">
   <rect width="8" height="8" fill="#0000"/>
-  <rect x="2" y="0" width="4" height="1" fill="#fff8d3"/>
-  <rect x="1" y="1" width="6" height="1" fill="#ffe495"/>
-  <rect x="0" y="2" width="8" height="4" fill="#ffd463"/>
-  <rect x="1" y="6" width="6" height="1" fill="#ffe495"/>
-  <rect x="2" y="7" width="4" height="1" fill="#fff8d3"/>
+  <!-- Magic Bolt / Spark -->
+  <rect x="2" y="2" width="4" height="4" fill="#fff" fill-opacity="0.9"/> <!-- Bright core -->
+  <rect x="3" y="1" width="2" height="6" fill="#81d4fa" fill-opacity="0.7"/> <!-- Vertical glow -->
+  <rect x="1" y="3" width="6" height="2" fill="#81d4fa" fill-opacity="0.7"/> <!-- Horizontal glow -->
+  <rect x="3" y="3" width="2" height="2" fill="#e1f5fe"/> <!-- Inner highlight -->
 </svg>

@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" shape-rendering="crispEdges">
-  <rect width="12" height="12" fill="#0000"/>
-  <rect x="4" y="0" width="4" height="2" fill="#d9d6cf"/>
-  <rect x="3" y="2" width="6" height="8" fill="#9fe6a4"/>
-  <rect x="2" y="3" width="1" height="6" fill="#d9d6cf"/>
-  <rect x="9" y="3" width="1" height="6" fill="#d9d6cf"/>
-  <rect x="4" y="5" width="4" height="2" fill="#7bd18a"/>
-  <rect x="4" y="10" width="4" height="1" fill="#d9d6cf"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect width="16" height="16" fill="#0000"/>
+  <!-- Glass Flask -->
+  <rect x="7" y="1" width="2" height="2" fill="#8d6e63"/> <!-- Cork -->
+  <rect x="6" y="3" width="4" height="2" fill="#cfd8dc" fill-opacity="0.5"/> <!-- Neck -->
+  
+  <!-- Rounded Liquid Body -->
+  <rect x="5" y="5" width="6" height="1" fill="#cfd8dc" fill-opacity="0.4"/> <!-- Glass shoulder -->
+  <rect x="4" y="6" width="8" height="7" rx="3" fill="#ef5350"/> <!-- Red Potion liquid -->
+  <rect x="5" y="13" width="6" height="1" fill="#c62828"/> <!-- Liquid shading -->
+  
+  <!-- Bubbles/Sparkle -->
+  <rect x="6" y="8" width="1" height="1" fill="#ff8a80"/>
+  <rect x="9" y="10" width="1" height="1" fill="#ff8a80"/>
+  
+  <!-- Glass Reflection -->
+  <rect x="5" y="7" width="1" height="3" fill="#fff" fill-opacity="0.5"/>
+  <rect x="6" y="6" width="2" height="1" fill="#fff" fill-opacity="0.3"/>
 </svg>
