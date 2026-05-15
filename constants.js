@@ -132,6 +132,7 @@ export const SPRITE_ASSETS = {
     skeleton: 'assets/sprites/skeleton.svg',
     zombie: 'assets/sprites/zombie.svg',
     projectile: 'assets/sprites/projectile.svg',
+    coin: 'assets/sprites/coin.svg',
     potion: 'assets/sprites/potion.svg',
     portal: 'assets/sprites/portal.svg',
     floor: 'assets/sprites/floor.svg',

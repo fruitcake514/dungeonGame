@@ -31,8 +31,8 @@ export class StartScene extends Phaser.Scene {
         }
 
         // Background Ornaments
-        this.add.circle(width * 0.2, height * 0.28, Math.max(width, height) * 0.28, 0xa8c686, 0.1).setAlpha(0.2);
-        this.add.circle(width * 0.8, height * 0.7, Math.max(width, height) * 0.32, 0x5b7a5d, 0.08).setAlpha(0.15);
+        this.add.circle(width * 0.2, height * 0.28, Math.max(width, height) * 0.28, 0xa8c686, 0.1).setAlpha(0.2).setInteractive();
+        this.add.circle(width * 0.8, height * 0.7, Math.max(width, height) * 0.32, 0x5b7a5d, 0.08).setAlpha(0.15).setInteractive();
 
         // Title Panel
         const titlePanel = this.add.image(width / 2, height / 2 - 100, 'uiPanel');
@@ -46,6 +46,15 @@ export class StartScene extends Phaser.Scene {
             stroke: '#3e2723',
             strokeThickness: 8
         }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: [title, titlePanel],
+            y: '-=10',
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
 
         this.add.text(width / 2, height / 2 - 65, 'A Pixel Dungeon Adventure', {
             fontSize: '28px',
@@ -68,11 +77,18 @@ export class StartScene extends Phaser.Scene {
             padding: { x: 20, y: 10 }
         }).setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
-            .on('pointerdown', (pointer, localX, localY, event) => {
-                if (event) event.stopPropagation();
+            .on('pointerdown', () => {
                 if (this.bgMusic) this.bgMusic.stop();
                 this.scene.start('GameScene', { levelIndex: 1, score: 0, health: 100, lanternFuel: 100, weaponType: 'wand' });
             });
+        
+        this.tweens.add({
+            targets: startPrompt,
+            alpha: 0.5,
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        });
 
         // Audio Settings UI
         const settingsY = height - 60;
@@ -410,8 +426,7 @@ export class GameScene extends Phaser.Scene {
         for (let i = 0; i < coinCount; i++) {
             const tile = this.dungeon.getRandomOpenTile();
             if (tile) {
-                const coin = this.coinsGroup.create(tile.x * TILE_SIZE, tile.y * TILE_SIZE, 'projectile').setScale(1.35, 1.02);
-                coin.setTint(0xf4d35e);
+                const coin = this.coinsGroup.create(tile.x * TILE_SIZE, tile.y * TILE_SIZE, 'coin').setScale(1.5, 1.25);
                 coin.value = 3 + Phaser.Math.Between(0, 5);
                 coin.baseY = coin.y;
                 coin.bobOffset = Phaser.Math.FloatBetween(0, Math.PI * 2);
@@ -448,11 +463,13 @@ export class GameScene extends Phaser.Scene {
             color: '#a8c686' 
         }).setScrollFactor(0);
 
-        this.coinIcon = this.add.image(hud.x + 12, hud.y + hud.rowGap * 3, 'projectile').setTint(0xf4d35e).setScrollFactor(0).setScale(1.5).setDepth(HUD_DEPTH);
-        this.coinText = this.add.text(hud.x + 28, hud.y + hud.rowGap * 3, `x${this.coins}`, {
+        this.coinIcon = this.add.image(hud.x + 12, hud.y + hud.coinY, 'coin').setScrollFactor(0).setScale(1.8).setDepth(HUD_DEPTH);
+        this.coinText = this.add.text(hud.x + 30, hud.y + hud.coinY, `x${this.coins}`, {
             fontSize: `${hud.fontSmall}px`,
             fontFamily: 'VT323',
-            color: '#ffe28d'
+            color: '#ffe28d',
+            stroke: '#000',
+            strokeThickness: 2
         }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(HUD_DEPTH);
         this.coinIcon.setY(this.coinText.y);
 
@@ -822,8 +839,12 @@ export class GameScene extends Phaser.Scene {
         this.levelText.setPosition(this.hud.x, this.hud.y + this.hud.rowGap).setFontSize(this.hud.fontMedium);
         this.worldText.setPosition(this.hud.x, this.hud.y + this.hud.rowGap * 2).setFontSize(this.hud.fontSmall);
         
-        if (this.coinIcon) this.coinIcon.setPosition(this.hud.x + 12, this.hud.y + this.hud.rowGap * 3);
-        if (this.coinText) this.coinText.setPosition(this.hud.x + 28, this.hud.y + this.hud.rowGap * 3).setFontSize(this.hud.fontSmall);
+        if (this.coinIcon) {
+            this.coinIcon.setPosition(this.hud.x + 12, this.hud.y + this.hud.coinY).setScale(1.8 * (this.hud.fontSmall / 18));
+        }
+        if (this.coinText) {
+            this.coinText.setPosition(this.hud.x + 30, this.hud.y + this.hud.coinY).setFontSize(this.hud.fontSmall);
+        }
         if (this.coinIcon && this.coinText) this.coinIcon.setY(this.coinText.y);
 
         this.weaponText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY).setFontSize(this.hud.fontSmall);
@@ -1209,6 +1230,18 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
+    refreshPotionSlot() {
+        if (!this.potionSlot) return;
+        const slot = this.potionSlot;
+        slot.countText.setText(this.tempPotions.toString());
+        const hasPotions = this.tempPotions > 0;
+        const isActive = this.tempInvincibleUntil > this.time.now;
+        
+        slot.bg.setTint(isActive ? 0x9dfde3 : (hasPotions ? 0xffffff : 0x444444));
+        slot.icon.setAlpha(hasPotions ? 1 : 0.5);
+        slot.countText.setVisible(hasPotions);
+    }
+
     getAimDirection() {
         // Iterate through active pointers to find one that is NOT on the joystick
         const pointers = [this.input.activePointer, this.input.pointer1, this.input.pointer2].filter(p => p && p.isDown);
@@ -1586,7 +1619,7 @@ export class GameScene extends Phaser.Scene {
         const value = coin.value || 3;
         coin.destroy();
         this.coins += value;
-        this.coinText.setText(`Coins: ${this.coins}`);
+        this.coinText.setText(`x${this.coins}`);
         this.playSfx('weaponPickup', { volume: 0.12, rate: 1.3, seek: 0.26, duration: 0.15 });
         this.spawnSparkBurst(_player.x, _player.y - 8, 0xfdd56e, 10, 90);
     }
@@ -1892,7 +1925,7 @@ export class GameScene extends Phaser.Scene {
                     return;
                 }
                 this.coins -= option.cost;
-                this.coinText.setText(`Coins: ${this.coins}`);
+                this.coinText.setText(`x${this.coins}`);
                 this.applyUpgrade(option.id);
                 finalize();
             });
@@ -2219,9 +2252,10 @@ export class GameScene extends Phaser.Scene {
             fontLarge: Math.round(24 * scale),
             fontMedium: Math.round(20 * scale),
             fontSmall: Math.round(18 * scale),
-            statsStartY: Math.round(118 * scale),
-            healthY: Math.round(74 * scale),
-            lanternY: Math.round(98 * scale),
+            coinY: Math.round(rowGap * 3),
+            healthY: Math.round(rowGap * 4.2),
+            lanternY: Math.round(rowGap * 5.5),
+            statsStartY: Math.round(rowGap * 7.2),
             barInset,
             barInnerWidth,
             barInnerHeight: Math.round(12 * scale),
