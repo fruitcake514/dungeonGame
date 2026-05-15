@@ -342,45 +342,43 @@ export class GameScene extends Phaser.Scene {
             y: controls.y,
             radius: controls.radius,
             base: this.add.circle(0, 0, controls.radius, 0x888888, 0.4).setScrollFactor(0),
-            thumb: this.add.circle(0, 0, controls.thumbRadius, 0xcccccc, 0.5).setScrollFactor(0)
+            thumb: this.add.circle(0, 0, controls.thumbRadius, 0xcccccc, 0.5).setScrollFactor(0),
+            enable: true
         });
         this.joystick.base.setDepth(HUD_DEPTH).setStrokeStyle(3, 0xffffff, 0.3);
         this.joystick.thumb.setDepth(HUD_DEPTH).setStrokeStyle(2, 0xffffff, 0.4);
         
-        // Mobile zones to prevent 'stuck' input and firing conflicts
-        this.joystickZone = this.add.circle(controls.leftX, controls.y, controls.radius * 1.5)
-            .setScrollFactor(0).setDepth(HUD_DEPTH + 10).setInteractive();
-        
+        // Action Button - Ultra Sensitive
         this.actionButton = this.add.circle(controls.rightX, controls.y, controls.buttonRadius, 0xcc4444, 0.6)
             .setScrollFactor(0)
             .setDepth(HUD_DEPTH)
             .setStrokeStyle(4, 0xffffff, 0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', (pointer, localX, localY, event) => {
-                if (event) event.stopPropagation();
+            .setInteractive({ useHandCursor: true });
+
+        // Immediate Global Input Listeners for Mobile
+        this.input.on('pointerdown', (pointer) => {
+            const distToAction = Phaser.Math.Distance.Between(pointer.x, pointer.y, controls.rightX, controls.y);
+            if (distToAction < controls.buttonRadius * 1.6) {
                 this.isActionPressed = true;
                 this.shoot();
-            })
-            .on('pointerup', (pointer, localX, localY, event) => {
-                if (event) event.stopPropagation();
-                this.isActionPressed = false;
-            })
-            .on('pointerout', (pointer, localX, localY, event) => {
-                this.isActionPressed = false;
-            });
-        
-        this.actionZone = this.add.circle(controls.rightX, controls.y, controls.buttonRadius * 1.2)
-            .setScrollFactor(0).setDepth(HUD_DEPTH + 10).setInteractive();
-        
-        // Map zones to pointers to avoid 'stuck' joystick or firing issues
-        this.joystickZone.on('pointerdown', (p) => { p.stopPropagation(); });
-        this.actionZone.on('pointerdown', (p, lx, ly, event) => { 
-            if (event) event.stopPropagation();
-            this.isActionPressed = true; 
-            this.shoot();
+            }
         });
-        this.actionZone.on('pointerup', (p) => { this.isActionPressed = false; });
-        this.actionZone.on('pointerout', (p) => { this.isActionPressed = false; });
+
+        this.input.on('pointermove', (pointer) => {
+            if (pointer.isDown) {
+                const distToAction = Phaser.Math.Distance.Between(pointer.x, pointer.y, controls.rightX, controls.y);
+                if (distToAction < controls.buttonRadius * 1.6) {
+                    this.isActionPressed = true;
+                }
+            }
+        });
+
+        this.input.on('pointerup', (pointer) => {
+            const distToAction = Phaser.Math.Distance.Between(pointer.x, pointer.y, controls.rightX, controls.y);
+            if (distToAction < controls.buttonRadius * 1.6 || this.isActionPressed) {
+                this.isActionPressed = false;
+            }
+        });
         this.input.keyboard.on('keydown-SPACE', this.shoot, this);
         this.input.keyboard.on('keydown-ONE', () => this.selectWeaponSlot(0));
         this.input.keyboard.on('keydown-TWO', () => this.selectWeaponSlot(1));
@@ -651,8 +649,6 @@ export class GameScene extends Phaser.Scene {
             this.actionButton,
             this.joystick?.base,
             this.joystick?.thumb,
-            this.joystickZone,
-            this.actionZone,
             ...((this.weaponSlots || []).map((slot) => slot.bg)),
             ...((this.weaponSlots || []).map((slot) => slot.icon)),
             ...((this.weaponSlots || []).map((slot) => slot.keyText)),
@@ -852,13 +848,6 @@ export class GameScene extends Phaser.Scene {
         this.actionButton.setRadius(controls.buttonRadius);
         this.actionButton.x = controls.rightX;
         this.actionButton.y = controls.y;
-
-        if (this.joystickZone) {
-            this.joystickZone.setPosition(controls.leftX, controls.y).setRadius(controls.radius * 1.5).setVisible(false);
-        }
-        if (this.actionZone) {
-            this.actionZone.setPosition(controls.rightX, controls.y).setRadius(controls.buttonRadius * 1.2).setVisible(false);
-        }
 
         this.hud = this.getHudLayout(gameSize.width, gameSize.height);
         this.scoreText.setPosition(this.hud.x, this.hud.y).setFontSize(this.hud.fontLarge);
