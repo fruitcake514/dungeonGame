@@ -1,9 +1,25 @@
 {
-  "name": "Dungeon Crawler",
-  "short_name": "Dungeon",
-  "start_url": "/",
-  "display": "fullscreen",
+  "name": "Dungeon Crawler: Ember & Blade",
+  "short_name": "Dungeon Crawler",
+  "description": "A cozy yet challenging procedurally generated dungeon crawler with dynamic lighting and upgrades.",
+  "start_url": "./index.html",
+  "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "landscape"
+  "theme_color": "#a8c686",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "assets/sprites/player.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/sprites/lantern.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"]
 }
