@@ -14,6 +14,7 @@ const ASSETS = [
     './assets/sprites/zombie.svg',
     './assets/sprites/projectile.svg',
     './assets/sprites/coin.svg',
+    './assets/sprites/app_icon.svg',
     './assets/sprites/potion.svg',
     './assets/sprites/portal.svg',
     './assets/sprites/floor.svg',

@@ -2,23 +2,23 @@
   "name": "Ember & Blade: Dungeon Crawler",
   "short_name": "Ember & Blade",
   "description": "A Terraria-inspired fantasy mage dungeon crawler with dynamic lighting and upgrades.",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#4a148c",
   "orientation": "any",
   "icons": [
     {
-      "src": "assets/sprites/player.svg",
-      "sizes": "any",
+      "src": "assets/sprites/app_icon.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/sprites/lantern.svg",
-      "sizes": "any",
+      "src": "assets/sprites/app_icon.svg",
+      "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["games", "entertainment"]
