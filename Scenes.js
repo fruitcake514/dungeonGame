@@ -336,16 +336,16 @@ export class GameScene extends Phaser.Scene {
             .setDepth(HUD_DEPTH)
             .setStrokeStyle(4, 0xffffff, 0.5)
             .setInteractive({ useHandCursor: true })
-            .on('pointerdown', (pointer) => {
-                pointer.stopPropagation();
+            .on('pointerdown', (pointer, localX, localY, event) => {
+                if (event) event.stopPropagation();
                 this.isActionPressed = true;
                 this.shoot();
             })
-            .on('pointerup', (pointer) => {
-                pointer.stopPropagation();
+            .on('pointerup', (pointer, localX, localY, event) => {
+                if (event) event.stopPropagation();
                 this.isActionPressed = false;
             })
-            .on('pointerout', () => {
+            .on('pointerout', (pointer, localX, localY, event) => {
                 this.isActionPressed = false;
             });
         this.input.keyboard.on('keydown-SPACE', this.shoot, this);
@@ -444,9 +444,17 @@ export class GameScene extends Phaser.Scene {
         }).setScrollFactor(0);
         this.worldText = this.add.text(hud.x, hud.y + hud.rowGap * 2, this.theme.name, { 
             fontSize: `${hud.fontSmall}px`, 
-            fontFamily: 'VT323',
+            fontFamily: 'VT323', 
             color: '#a8c686' 
         }).setScrollFactor(0);
+
+        this.coinIcon = this.add.image(hud.x + 12, hud.y + hud.rowGap * 3, 'projectile').setTint(0xf4d35e).setScrollFactor(0).setScale(1.5).setDepth(HUD_DEPTH);
+        this.coinText = this.add.text(hud.x + 28, hud.y + hud.rowGap * 3, `x${this.coins}`, {
+            fontSize: `${hud.fontSmall}px`,
+            fontFamily: 'VT323',
+            color: '#ffe28d'
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(HUD_DEPTH);
+        this.coinIcon.setY(this.coinText.y);
 
         this.healthBar = this.add.graphics().setScrollFactor(0);
         this.healthBar.setDepth(HUD_DEPTH);
@@ -455,37 +463,16 @@ export class GameScene extends Phaser.Scene {
         this.lanternBar.setDepth(HUD_DEPTH);
         this.weaponText = this.add.text(hud.x, hud.y + hud.statsStartY, `Weapon: ${this.currentWeapon.name}`, { 
             fontSize: `${hud.fontSmall}px`, 
-            fontFamily: 'VT323',
+            fontFamily: 'VT323', 
             color: '#cde3ff' 
         }).setScrollFactor(0);
         this.updateLanternBar();
 
-        this.enemyCountText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap, '', { 
-            fontSize: `${hud.fontSmall}px`, 
-            fontFamily: 'VT323',
-            color: '#ffd4b9' 
-        }).setScrollFactor(0);
-        this.statusText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap * 2, '', {
+        this.statusText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap, '', {
             fontSize: `${hud.fontSmall}px`,
             fontFamily: 'VT323',
             color: '#fff0a8'
-        }).setScrollFactor(0);
-        this.coinText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap * 3, `Coins: ${this.coins}`, {
-            fontSize: `${hud.fontSmall}px`,
-            fontFamily: 'VT323',
-            color: '#ffe28d'
-        }).setScrollFactor(0);
-        this.inventoryText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap * 3, 'Inventory', {
-            fontSize: `${hud.fontSmall}px`,
-            fontFamily: 'VT323',
-            color: '#e9dcff'
-        }).setScrollFactor(0);
-        this.inventoryText.setY(hud.y + hud.statsStartY + hud.rowGap * 4);
-        this.tempPotionText = this.add.text(hud.x, hud.y + hud.statsStartY + hud.rowGap * 4.95, '', {
-            fontSize: `${Math.round(hud.fontSmall * 0.9)}px`,
-            fontFamily: 'VT323',
-            color: '#b9ffe0'
-        }).setScrollFactor(0);
+        }).setScrollFactor(0).setDepth(HUD_DEPTH);
         this.portalHintText = this.add.text(this.scale.width / 2, this.scale.height - Math.round(hud.rowGap * 1.4), '', {
             fontSize: `${Math.round(hud.fontSmall * 1.02)}px`,
             fontFamily: 'VT323',
@@ -494,19 +481,19 @@ export class GameScene extends Phaser.Scene {
             strokeThickness: 4,
             align: 'center'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(HUD_DEPTH).setVisible(false);
+
         this.weaponSlots = this.createWeaponSlotUi();
+        this.potionSlot = this.createPotionSlotUi();
         this.scoreText.setDepth(HUD_DEPTH);
         this.levelText.setDepth(HUD_DEPTH);
         this.worldText.setDepth(HUD_DEPTH);
         this.weaponText.setDepth(HUD_DEPTH);
-        this.enemyCountText.setDepth(HUD_DEPTH);
         this.statusText.setDepth(HUD_DEPTH);
         this.coinText.setDepth(HUD_DEPTH);
-        this.inventoryText.setDepth(HUD_DEPTH);
-        this.tempPotionText.setDepth(HUD_DEPTH);
+        this.coinIcon.setDepth(HUD_DEPTH);
         this.portalHintText.setDepth(HUD_DEPTH);
         this.refreshWeaponSlots();
-        this.refreshTempPotionText();
+        this.refreshPotionSlot();
 
         this.fogManager = this.add.particles('projectile');
         this.fog = this.fogManager.createEmitter({
@@ -621,11 +608,9 @@ export class GameScene extends Phaser.Scene {
             this.levelText,
             this.worldText,
             this.weaponText,
-            this.enemyCountText,
-            this.statusText,
+            this.coinIcon,
             this.coinText,
-            this.inventoryText,
-            this.tempPotionText,
+            this.statusText,
             this.portalHintText,
             this.healthBar,
             this.lanternBar,
@@ -634,7 +619,11 @@ export class GameScene extends Phaser.Scene {
             this.joystick?.thumb,
             ...((this.weaponSlots || []).map((slot) => slot.bg)),
             ...((this.weaponSlots || []).map((slot) => slot.icon)),
-            ...((this.weaponSlots || []).map((slot) => slot.keyText))
+            ...((this.weaponSlots || []).map((slot) => slot.keyText)),
+            this.potionSlot?.bg,
+            this.potionSlot?.icon,
+            this.potionSlot?.countText,
+            this.potionSlot?.keyText
         ].filter(Boolean);
 
         for (let i = 0; i < hudObjects.length; i++) {
@@ -832,14 +821,17 @@ export class GameScene extends Phaser.Scene {
         this.scoreText.setPosition(this.hud.x, this.hud.y).setFontSize(this.hud.fontLarge);
         this.levelText.setPosition(this.hud.x, this.hud.y + this.hud.rowGap).setFontSize(this.hud.fontMedium);
         this.worldText.setPosition(this.hud.x, this.hud.y + this.hud.rowGap * 2).setFontSize(this.hud.fontSmall);
+        
+        if (this.coinIcon) this.coinIcon.setPosition(this.hud.x + 12, this.hud.y + this.hud.rowGap * 3);
+        if (this.coinText) this.coinText.setPosition(this.hud.x + 28, this.hud.y + this.hud.rowGap * 3).setFontSize(this.hud.fontSmall);
+        if (this.coinIcon && this.coinText) this.coinIcon.setY(this.coinText.y);
+
         this.weaponText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY).setFontSize(this.hud.fontSmall);
-        this.enemyCountText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap).setFontSize(this.hud.fontSmall);
-        this.statusText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap * 2).setFontSize(this.hud.fontSmall);
-        this.coinText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap * 3).setFontSize(this.hud.fontSmall);
-        this.inventoryText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap * 4).setFontSize(this.hud.fontSmall);
-        this.tempPotionText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap * 5).setFontSize(Math.round(this.hud.fontSmall * 0.9));
+        this.statusText.setPosition(this.hud.x, this.hud.y + this.hud.statsStartY + this.hud.rowGap).setFontSize(this.hud.fontSmall);
         this.portalHintText.setPosition(gameSize.width / 2, gameSize.height - Math.round(this.hud.rowGap * 1.4)).setFontSize(Math.round(this.hud.fontSmall * 1.02));
+        
         this.layoutWeaponSlots();
+        if (this.potionSlot) this.layoutPotionSlot(this.potionSlot);
 
         this.updateCameraZoom();
         this.updateMapVisibility();
@@ -908,9 +900,10 @@ export class GameScene extends Phaser.Scene {
         const speed = 190 + this.upgrades.moveSpeed * 12;
         let x = 0;
         let y = 0;
-        const touchActive = this.sys.game.device.input.touch && this.joystick && this.joystick.force > this.joystickDeadzone;
+        
+        const joystickActive = this.joystick && this.joystick.force > this.joystickDeadzone;
 
-        if (touchActive) {
+        if (joystickActive) {
             const vec = new Phaser.Math.Vector2(this.joystick.forceX, this.joystick.forceY).normalize();
             x = vec.x;
             y = vec.y;
@@ -1151,8 +1144,7 @@ export class GameScene extends Phaser.Scene {
     updateEnemyCounter() {
         const alive = this.enemies.countActive(true);
         const bossesLeft = Math.max(0, this.requiredBosses - this.defeatedBosses);
-        this.enemyCountText.setText(`Enemies: ${alive}  Bosses Needed: ${bossesLeft}`);
-        this.statusText.setText(`Threat x${this.threatLevel.toFixed(2)}  Combo x${this.comboMultiplier.toFixed(1)}`);
+        this.statusText.setText(`Enemies: ${alive}  Bosses: ${bossesLeft}\nThreat: x${this.threatLevel.toFixed(2)}  Combo: x${this.comboMultiplier.toFixed(1)}`);
     }
 
     shoot() {
@@ -1935,13 +1927,18 @@ export class GameScene extends Phaser.Scene {
             { id: 'wandDamage', title: 'Arcane Core', desc: 'Increase wand bolt damage.', cost: 20 + this.upgrades.wandDamage * 8 },
             { id: 'bladeDamage', title: 'Sharpened Edge', desc: 'Increase sword slash damage.', cost: 20 + this.upgrades.bladeDamage * 8 },
             { id: 'moveSpeed', title: 'Fleet Boots', desc: 'Increase movement speed.', cost: 16 + this.upgrades.moveSpeed * 8 },
-            { id: 'maxLantern', title: 'Larger Lantern', desc: 'Increase max lantern fuel.', cost: 16 + this.upgrades.maxLantern * 10 },
-            { id: 'maxHealth', title: 'Vitality', desc: 'Increase max health.', cost: 18 + this.upgrades.maxHealth * 10 },
+            { id: 'maxLantern', title: 'Larger Lantern', desc: 'Increase max lantern fuel.', cost: 16 + this.upgrades.maxLantern * 10, max: 200, current: this.maxLanternFuel },
+            { id: 'maxHealth', title: 'Vitality', desc: 'Increase max health.', cost: 18 + this.upgrades.maxHealth * 10, max: 200, current: this.player.maxHealth },
             { id: 'tempPotion', title: 'Temp Potion', desc: 'Gain one 30s invincibility potion.', cost: 14 + this.tempPotions * 4 }
         ];
 
+        const validChoices = choices.filter(choice => {
+            if (choice.max !== undefined && choice.current >= choice.max) return false;
+            return true;
+        });
+
         const picked = [];
-        const pool = choices.slice();
+        const pool = validChoices.slice();
         while (picked.length < count && pool.length > 0) {
             const index = Phaser.Math.Between(0, pool.length - 1);
             picked.push(pool.splice(index, 1)[0]);
@@ -1952,20 +1949,20 @@ export class GameScene extends Phaser.Scene {
     applyUpgrade(id) {
         if (id === 'tempPotion') {
             this.tempPotions += 1;
-            this.refreshTempPotionText();
+            this.refreshPotionSlot();
             return;
         }
         this.upgrades[id] = (this.upgrades[id] || 0) + 1;
         if (id === 'maxLantern') {
             const prevMax = this.maxLanternFuel;
-            this.maxLanternFuel = 100 + this.upgrades.maxLantern * 18;
+            this.maxLanternFuel = Math.min(200, 100 + this.upgrades.maxLantern * 20);
             this.lanternFuel += this.maxLanternFuel - prevMax;
             this.lanternFuel = Phaser.Math.Clamp(this.lanternFuel, 0, this.maxLanternFuel);
             this.updateLanternBar();
         }
         if (id === 'maxHealth') {
             const prevMax = this.player.maxHealth;
-            this.player.maxHealth = 100 + this.upgrades.maxHealth * 22;
+            this.player.maxHealth = Math.min(200, 100 + this.upgrades.maxHealth * 20);
             this.player.health += this.player.maxHealth - prevMax;
             this.player.health = Phaser.Math.Clamp(this.player.health, 1, this.player.maxHealth);
             this.updateHealthBar();
@@ -1992,13 +1989,61 @@ export class GameScene extends Phaser.Scene {
         });
     }
 
+    createPotionSlotUi() {
+        const bg = this.add.image(0, 0, 'uiSlot')
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', (pointer, localX, localY, event) => {
+                if (event) event.stopPropagation();
+                this.useTempPotion();
+            });
+        const icon = this.add.image(0, 0, 'potion').setScrollFactor(0).setScale(1.1);
+        const countText = this.add.text(0, 0, '0', {
+            fontSize: '20px',
+            fontFamily: 'VT323',
+            color: '#fff',
+            stroke: '#000',
+            strokeThickness: 3
+        }).setScrollFactor(0).setOrigin(0.5);
+        const keyText = this.add.text(0, 0, 'R', {
+            fontSize: '14px',
+            fontFamily: 'VT323',
+            color: '#d7deea'
+        }).setScrollFactor(0).setOrigin(0.5);
+
+        const slot = { bg, icon, countText, keyText };
+        this.layoutPotionSlot(slot);
+        this.refreshPotionSlot(slot);
+        return slot;
+    }
+
+    layoutPotionSlot(slot) {
+        if (!slot) return;
+        const size = Math.max(50, Math.round(58 * (this.hud.fontSmall / 18)));
+        const spacing = Math.max(8, Math.round(8 * (this.hud.fontSmall / 18)));
+        const controls = this.getControlMetrics(this.scale.width, this.scale.height);
+        
+        // Place to the left of the weapon slots
+        const weaponSize = Math.max(50, Math.round(58 * (this.hud.fontSmall / 18)));
+        const x = controls.rightX - (2 * (weaponSize + spacing)) - size/2;
+        const y = controls.y - controls.buttonRadius - spacing - size/2;
+
+        slot.bg.setDisplaySize(size, size).setPosition(x, y);
+        slot.icon.setPosition(x, y).setScale(size / 22);
+        slot.countText.setPosition(x + Math.round(size * 0.28), y + Math.round(size * 0.28)).setFontSize(Math.round(size * 0.35));
+        slot.keyText.setPosition(x - Math.round(size * 0.32), y - Math.round(size * 0.34)).setFontSize(Math.round(size * 0.28));
+    }
+
     createWeaponSlotUi() {
         const slots = [];
         for (let i = 0; i < 2; i++) {
             const bg = this.add.image(0, 0, 'uiSlot')
                 .setScrollFactor(0)
                 .setInteractive()
-                .on('pointerdown', () => this.selectWeaponSlot(i));
+                .on('pointerdown', (pointer, localX, localY, event) => {
+                    if (event) event.stopPropagation();
+                    this.selectWeaponSlot(i);
+                });
             const icon = this.add.image(0, 0, 'weaponWand').setScrollFactor(0).setScale(0.85);
             const keyText = this.add.text(0, 0, `${i + 1}`, {
                 fontSize: `${Math.round(this.hud.fontSmall * 0.72)}px`,
@@ -2110,14 +2155,14 @@ export class GameScene extends Phaser.Scene {
         this.tempInvincibleUntil = this.time.now + 30000;
         this.player.isInvulnerable = true;
         this.player.setTint(0x9dfde3);
-        this.refreshTempPotionText();
+        this.refreshPotionSlot();
         this.flashMessage('Invincible for 30s', '#b8ffe8', 1100);
     }
 
     updateTempInvincibility(now) {
         if (this.tempInvincibleUntil <= 0) return;
         if (now <= this.tempInvincibleUntil) {
-            this.refreshTempPotionText();
+            this.refreshPotionSlot();
             return;
         }
         this.tempInvincibleUntil = 0;
@@ -2125,7 +2170,7 @@ export class GameScene extends Phaser.Scene {
             this.player.clearTint();
         }
         this.player.isInvulnerable = false;
-        this.refreshTempPotionText();
+        this.refreshPotionSlot();
     }
 
     updateAimFromPointer(pointer) {
