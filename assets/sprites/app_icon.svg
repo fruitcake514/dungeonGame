@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" shape-rendering="crispEdges">
+  <rect width="512" height="512" fill="#0d1117"/>
+  
+  <!-- Outer Glow Circle -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#6a1b9a; stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#0d1117; stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="220" fill="url(#glow)"/>
+
+  <!-- Crossed Weapons Background -->
+  <!-- Blade -->
+  <rect x="180" y="100" width="30" height="300" fill="#455a64" transform="rotate(-45 256 256)"/>
+  <rect x="195" y="100" width="15" height="300" fill="#607d8b" transform="rotate(-45 256 256)"/>
+  <!-- Staff -->
+  <rect x="240" y="100" width="30" height="312" fill="#5d4037" transform="rotate(45 256 256)"/>
+  <rect x="240" y="100" width="30" height="60" fill="#00e5ff" transform="rotate(45 256 256)"/>
+
+  <!-- Wizard Hat -->
+  <path d="M256 60 L380 340 L132 340 Z" fill="#4a148c" stroke="#7b1fa2" stroke-width="8"/>
+  <rect x="132" y="320" width="248" height="40" rx="10" fill="#4a148c" stroke="#7b1fa2" stroke-width="8"/>
+  
+  <!-- Hat Band & Buckle -->
+  <rect x="190" y="280" width="132" height="40" fill="#311b92"/>
+  <rect x="236" y="275" width="40" height="50" rx="4" fill="#ffd54f" stroke="#ffca28" stroke-width="4"/>
+  <rect x="248" y="288" width="16" height="24" fill="#311b92"/>
+
+  <!-- Glowing Ember at Tip -->
+  <circle cx="256" cy="70" r="18" fill="#ff1744">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="256" cy="70" r="8" fill="#fff"/>
+</svg>
